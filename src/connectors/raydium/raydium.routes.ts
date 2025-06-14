@@ -4,10 +4,12 @@ import type { FastifyPluginAsync } from 'fastify';
 // CLMM routes
 import { addLiquidityRoute as ammAddLiquidityRoute } from './amm-routes/addLiquidity';
 import { executeSwapRoute as ammExecuteSwapRoute } from './amm-routes/executeSwap';
+import { executeSwapDirectRoute } from './amm-routes/executeSwapDirect';
 import { poolInfoRoute as ammPoolInfoRoute } from './amm-routes/poolInfo';
 import { positionInfoRoute as ammPositionInfoRoute } from './amm-routes/positionInfo';
 import { quoteLiquidityRoute } from './amm-routes/quoteLiquidity';
 import { quoteSwapRoute as ammQuoteSwapRoute } from './amm-routes/quoteSwap';
+import { quoteSwapDirectRoute } from './amm-routes/quoteSwapDirect';
 import { removeLiquidityRoute as ammRemoveLiquidityRoute } from './amm-routes/removeLiquidity';
 import { addLiquidityRoute } from './clmm-routes/addLiquidity';
 import { closePositionRoute } from './clmm-routes/closePosition';
@@ -64,6 +66,8 @@ const raydiumAmmRoutes: FastifyPluginAsync = async (fastify) => {
     await instance.register(quoteLiquidityRoute);
     await instance.register(ammQuoteSwapRoute);
     await instance.register(ammExecuteSwapRoute);
+    await instance.register(quoteSwapDirectRoute);
+    await instance.register(executeSwapDirectRoute);
     await instance.register(ammAddLiquidityRoute);
     await instance.register(ammRemoveLiquidityRoute);
   });
