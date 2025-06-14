@@ -17,3 +17,8 @@ package-lock.json
 .history
 
 **/.claude/settings.local.json
+.env
+.env.local
+.env.*
+*.key
+*.pem
