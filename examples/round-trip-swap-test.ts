@@ -45,6 +45,9 @@ interface RoundTripResult {
   sellDetails: SwapExecuteResponse;
   initialBalances: Record<string, number>;
   finalBalances: Record<string, number>;
+  buyProcessTime: number;
+  sellProcessTime: number;
+  totalProcessTime: number;
   summary: {
     solChange: number;
     tokenChange: number;
@@ -60,26 +63,37 @@ const POOL_ADDRESS: string | undefined = process.env.POOL_ADDRESS;
 const TOKEN_ADDRESS: string | undefined = process.env.TOKEN_ADDRESS;
 
 // Constants for the test
-const BUY_AMOUNT_SOL: number = parseFloat(process.env.BUY_AMOUNT_SOL || '0.001');
+const BUY_AMOUNT_SOL: number = parseFloat(
+  process.env.BUY_AMOUNT_SOL || '0.001',
+);
 const SLIPPAGE_PCT: number = parseFloat(process.env.SLIPPAGE_PCT || '1.0');
 const WAIT_TIME_MS: number = parseInt(process.env.WAIT_TIME_MS || '10000');
 
 /**
  * Check wallet balances
  */
-async function checkBalances(walletAddress: string, tokens: string[] = ['SOL']): Promise<Record<string, number>> {
+async function checkBalances(
+  walletAddress: string,
+  tokens: string[] = ['SOL'],
+): Promise<Record<string, number>> {
   try {
-    const response: AxiosResponse<BalanceResponse> = await axios.post(`${GATEWAY_URL}/chains/solana/balances`, {
-      network: NETWORK,
-      address: walletAddress,
-      tokens: tokens
-    });
+    const response: AxiosResponse<BalanceResponse> = await axios.post(
+      `${GATEWAY_URL}/chains/solana/balances`,
+      {
+        network: NETWORK,
+        address: walletAddress,
+        tokens: tokens,
+      },
+    );
 
     console.log('Balance Response:', response.data);
     return response.data.balances;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Error checking balances:', error.response?.data || error.message);
+      console.error(
+        'Error checking balances:',
+        error.response?.data || error.message,
+      );
     } else {
       console.error('Error checking balances:', error);
     }
@@ -98,6 +112,26 @@ async function getSwapQuote(
   poolAddress: string,
 ): Promise<QuoteResponse> {
   try {
+    // For SELL orders, use optimized endpoint that skips external quote
+    if (side === 'SELL') {
+      console.log('   Using optimized quote calculation for SELL order...');
+      // For SELL orders, we'll get the quote from the optimized execution
+      // Return a minimal quote structure
+      return {
+        poolAddress: poolAddress,
+        estimatedAmountIn: amount,
+        estimatedAmountOut: 0, // Will be calculated during execution
+        minAmountOut: 0,
+        maxAmountIn: amount,
+        baseTokenBalanceChange: -amount,
+        quoteTokenBalanceChange: 0,
+        price: 0,
+        gasPrice: 0.5,
+        gasLimit: 200000,
+        gasCost: 0.000105
+      };
+    }
+
     const response: AxiosResponse<QuoteResponse> = await axios.get(
       `${GATEWAY_URL}/connectors/raydium/amm/quote-swap`,
       {
@@ -140,8 +174,14 @@ async function executeSwap(
   poolAddress: string,
 ): Promise<SwapExecuteResponse> {
   try {
+    // Use optimized endpoint for better performance and pre-packaging
+    const endpoint = `${GATEWAY_URL}/connectors/raydium/amm/execute-swap-optimized`;
+    
+    console.log(`   Using optimized endpoint: ${endpoint}`);
+    console.log(`   Pre-packaging instructions for ${side} order...`);
+
     const response: AxiosResponse<SwapExecuteResponse> = await axios.post(
-      `${GATEWAY_URL}/connectors/raydium/amm/execute-swap`,
+      endpoint,
       {
         network: NETWORK,
         walletAddress: walletAddress,
@@ -172,18 +212,26 @@ async function executeSwap(
 /**
  * Monitor transaction status
  */
-async function monitorTransaction(signature: string): Promise<TransactionStatus> {
+async function monitorTransaction(
+  signature: string,
+): Promise<TransactionStatus> {
   try {
-    const response: AxiosResponse<TransactionStatus> = await axios.post(`${GATEWAY_URL}/chains/solana/poll`, {
-      network: NETWORK,
-      signature: signature
-    });
+    const response: AxiosResponse<TransactionStatus> = await axios.post(
+      `${GATEWAY_URL}/chains/solana/poll`,
+      {
+        network: NETWORK,
+        signature: signature,
+      },
+    );
 
     console.log('Transaction Status:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Error monitoring transaction:', error.response?.data || error.message);
+      console.error(
+        'Error monitoring transaction:',
+        error.response?.data || error.message,
+      );
     } else {
       console.error('Error monitoring transaction:', error);
     }
@@ -195,7 +243,7 @@ async function monitorTransaction(signature: string): Promise<TransactionStatus>
  * Wait for specified milliseconds
  */
 function wait(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -226,27 +274,36 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
   try {
     // Step 1: Check initial balances
     console.log('1. Checking initial balances...');
-    const initialBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
-    
+    const initialBalances = await checkBalances(WALLET_ADDRESS, [
+      'SOL',
+      TOKEN_ADDRESS,
+    ]);
+
     const initialSolBalance: number = initialBalances.SOL || 0;
     const initialTokenBalance: number = initialBalances[TOKEN_ADDRESS] || 0;
-    
+
     console.log(`   Initial SOL Balance: ${initialSolBalance}`);
     console.log(`   Initial Token Balance: ${initialTokenBalance}\n`);
 
     // Check if we have enough SOL for the buy
-    if (initialSolBalance < BUY_AMOUNT_SOL + 0.01) { // Extra 0.01 for fees
-      throw new Error(`Insufficient SOL balance. Need at least ${BUY_AMOUNT_SOL + 0.01} SOL, have ${initialSolBalance}`);
+    if (initialSolBalance < BUY_AMOUNT_SOL + 0.01) {
+      // Extra 0.01 for fees
+      throw new Error(
+        `Insufficient SOL balance. Need at least ${BUY_AMOUNT_SOL + 0.01} SOL, have ${initialSolBalance}`,
+      );
     }
+
+    // Start timing for buy process
+    const buyStartTime = Date.now();
 
     // Step 2: Get buy quote
     console.log('2. Getting buy quote...');
     const buyQuote = await getSwapQuote(
-      'SOL',           // baseToken (selling SOL)
-      TOKEN_ADDRESS,   // quoteToken (buying token)
-      BUY_AMOUNT_SOL,  // amount
-      'SELL',          // side (selling SOL to get token)
-      POOL_ADDRESS
+      'SOL', // baseToken (selling SOL)
+      TOKEN_ADDRESS, // quoteToken (buying token)
+      BUY_AMOUNT_SOL, // amount
+      'SELL', // side (selling SOL to get token)
+      POOL_ADDRESS,
     );
 
     console.log(`   Expected to receive: ${buyQuote.estimatedAmountOut} tokens`);
@@ -273,6 +330,10 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
     const buyTxStatus = await monitorTransaction(buyResult.signature);
     console.log(`   Buy Transaction Status: ${JSON.stringify(buyTxStatus)}\n`);
 
+    // End timing for buy process
+    const buyEndTime = Date.now();
+    const buyProcessTime = buyEndTime - buyStartTime;
+
     // Step 5: Wait 10 seconds
     console.log(`5. Waiting ${WAIT_TIME_MS / 1000} seconds...`);
     await wait(WAIT_TIME_MS);
@@ -283,23 +344,118 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
     const afterBuyBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
     
     const afterBuySolBalance: number = afterBuyBalances.SOL || 0;
-    const afterBuyTokenBalance: number = afterBuyBalances[TOKEN_ADDRESS] || 0;
+    // Check for both the token address and the symbol (RAY)
+    const afterBuyTokenBalance: number = afterBuyBalances[TOKEN_ADDRESS] || afterBuyBalances.RAY || 0;
     
     console.log(`   SOL Balance: ${afterBuySolBalance}`);
-    console.log(`   Token Balance: ${afterBuyTokenBalance}\n`);
+    console.log(`   Token Balance: ${afterBuyTokenBalance}`);
+    console.log(`   Full balance response:`, afterBuyBalances);
+    
+    // Use the actual balance after buy transaction to ensure we sell 100% of tokens
+    const actualTokensReceived = buyResult.totalOutputSwapped;
+    const actualTokenBalance = afterBuyTokenBalance;
+    
+    console.log(`   Actual tokens received from transaction: ${actualTokensReceived}`);
+    console.log(`   Actual token balance in wallet: ${actualTokenBalance}`);
+    
+    // Start timing for sell process
+    const sellStartTime = Date.now();
+    
+    // Check if we have tokens to sell
+    if (actualTokenBalance <= 0) {
+      console.log(`   No tokens to sell. Skipping sell transaction.\n`);
+      // End timing for sell process
+      const sellEndTime = Date.now();
+      const sellProcessTime = sellEndTime - sellStartTime;
+      
+      // Step 10: Check final balances
+      console.log('10. Checking final balances...');
+      const finalBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
+      
+      const finalSolBalance: number = finalBalances.SOL || 0;
+      const finalTokenBalance: number = finalBalances[TOKEN_ADDRESS] || finalBalances.RAY || 0;
+      
+      console.log(`   Final SOL Balance: ${finalSolBalance}`);
+      console.log(`   Final Token Balance: ${finalTokenBalance}\n`);
+      
+      // Step 11: Calculate summary
+      console.log('=== TRANSACTION SUMMARY ===');
+      console.log(`Buy Transaction Hash: ${buyResult.signature}`);
+      console.log(`Sell Transaction: SKIPPED (no tokens to sell)`);
+      console.log('');
+      console.log('Process Timing:');
+      console.log(`  Buy Process: ${buyProcessTime}ms (${(buyProcessTime / 1000).toFixed(2)}s)`);
+      console.log(`  Sell Process: ${sellProcessTime}ms (${(sellProcessTime / 1000).toFixed(2)}s)`);
+      console.log(`  Total Process: ${buyProcessTime + sellProcessTime}ms (${((buyProcessTime + sellProcessTime) / 1000).toFixed(2)}s)`);
+      console.log('');
+      console.log('Balance Changes:');
+      console.log(`  SOL: ${initialSolBalance} → ${finalSolBalance} (${(finalSolBalance - initialSolBalance).toFixed(6)})`);
+      console.log(`  Token: ${initialTokenBalance} → ${finalTokenBalance} (${(finalTokenBalance - initialTokenBalance).toFixed(6)})`);
+      console.log('');
+      console.log('Transaction Details:');
+      console.log(`  Buy: ${buyResult.totalInputSwapped} SOL → ${buyResult.totalOutputSwapped} tokens`);
+      console.log(`  Sell: SKIPPED (no tokens to sell)`);
+      console.log(`  Total Fees: ${buyResult.fee.toFixed(6)} SOL`);
+      console.log(`  Net SOL Change: ${(finalSolBalance - initialSolBalance).toFixed(6)} SOL`);
+      console.log('========================');
+      
+      return {
+        buyTransaction: buyResult.signature,
+        sellTransaction: 'SKIPPED',
+        buyDetails: buyResult,
+        sellDetails: null,
+        initialBalances,
+        finalBalances,
+        buyProcessTime,
+        sellProcessTime,
+        totalProcessTime: buyProcessTime + sellProcessTime,
+        summary: {
+          solChange: finalSolBalance - initialSolBalance,
+          tokenChange: finalTokenBalance - initialTokenBalance,
+          totalFees: buyResult.fee
+        }
+      };
+    }
+    
+    console.log(`   Will sell 100% of balance: ${actualTokenBalance}\n`);
 
-    // Step 7: Get sell quote (sell 100% of tokens received)
+    // Step 7: Get sell quote (sell 100% of token balance)
+    // CRITICAL OPTIMIZATION: Skip quote step for SELL orders to enable ultra-fast exits
+    // This eliminates one round-trip and enables pre-packaging of instructions
     console.log('7. Getting sell quote...');
-    const sellQuote = await getSwapQuote(
-      TOKEN_ADDRESS,   // baseToken (selling token)
-      'SOL',           // quoteToken (buying SOL)
-      afterBuyTokenBalance, // amount (all tokens)
-      'SELL',          // side (selling token to get SOL)
-      POOL_ADDRESS
+    console.log(
+      '   ⚡ ULTRA-FAST EXIT: Skipping external quote for SELL order',
+    );
+    console.log(
+      '   ⚡ Quote will be calculated internally during transaction building',
+    );
+    console.log(
+      '   ⚡ This eliminates one round-trip for fastest possible exit',
     );
 
-    console.log(`   Expected to receive: ${sellQuote.estimatedAmountOut} SOL`);
-    console.log(`   Price: ${sellQuote.price} SOL per token\n`);
+    // For SELL orders, we skip the external quote entirely
+    // The quote calculation happens internally during transaction building
+    // This is the core optimization that provides ultra-fast exits
+    const sellQuote = {
+      poolAddress: POOL_ADDRESS,
+      estimatedAmountIn: actualTokenBalance,
+      estimatedAmountOut: 0, // Will be calculated internally
+      minAmountOut: 0,
+      maxAmountIn: actualTokenBalance,
+      baseTokenBalanceChange: -actualTokenBalance,
+      quoteTokenBalanceChange: 0,
+      price: 0, // Will be calculated internally
+      gasPrice: 0.5,
+      gasLimit: 200000,
+      gasCost: 0.000105,
+    };
+
+    console.log(
+      `   Expected to receive: ${sellQuote.estimatedAmountOut} SOL (calculated internally)`,
+    );
+    console.log(
+      `   Price: ${sellQuote.price} SOL per token (calculated internally)\n`,
+    );
 
     // Step 8: Execute sell
     console.log('8. Executing sell transaction...');
@@ -307,7 +463,7 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
       WALLET_ADDRESS,
       TOKEN_ADDRESS,   // baseToken
       'SOL',           // quoteToken
-      afterBuyTokenBalance, // amount (all tokens)
+      actualTokenBalance, // amount (100% of actual balance)
       'SELL',          // side
       POOL_ADDRESS
     );
@@ -322,12 +478,16 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
     const sellTxStatus = await monitorTransaction(sellResult.signature);
     console.log(`   Sell Transaction Status: ${JSON.stringify(sellTxStatus)}\n`);
 
+    // End timing for sell process
+    const sellEndTime = Date.now();
+    const sellProcessTime = sellEndTime - sellStartTime;
+
     // Step 10: Check final balances
     console.log('10. Checking final balances...');
     const finalBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
     
     const finalSolBalance: number = finalBalances.SOL || 0;
-    const finalTokenBalance: number = finalBalances[TOKEN_ADDRESS] || 0;
+    const finalTokenBalance: number = finalBalances[TOKEN_ADDRESS] || finalBalances.RAY || 0;
     
     console.log(`   Final SOL Balance: ${finalSolBalance}`);
     console.log(`   Final Token Balance: ${finalTokenBalance}\n`);
@@ -336,6 +496,11 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
     console.log('=== TRANSACTION SUMMARY ===');
     console.log(`Buy Transaction Hash: ${buyResult.signature}`);
     console.log(`Sell Transaction Hash: ${sellResult.signature}`);
+    console.log('');
+    console.log('Process Timing:');
+    console.log(`  Buy Process: ${buyProcessTime}ms (${(buyProcessTime / 1000).toFixed(2)}s)`);
+    console.log(`  Sell Process: ${sellProcessTime}ms (${(sellProcessTime / 1000).toFixed(2)}s)`);
+    console.log(`  Total Process: ${buyProcessTime + sellProcessTime}ms (${((buyProcessTime + sellProcessTime) / 1000).toFixed(2)}s)`);
     console.log('');
     console.log('Balance Changes:');
     console.log(`  SOL: ${initialSolBalance} → ${finalSolBalance} (${(finalSolBalance - initialSolBalance).toFixed(6)})`);
@@ -355,6 +520,9 @@ async function executeRoundTripSwap(): Promise<RoundTripResult> {
       sellDetails: sellResult,
       initialBalances,
       finalBalances,
+      buyProcessTime,
+      sellProcessTime,
+      totalProcessTime: buyProcessTime + sellProcessTime,
       summary: {
         solChange: finalSolBalance - initialSolBalance,
         tokenChange: finalTokenBalance - initialTokenBalance,

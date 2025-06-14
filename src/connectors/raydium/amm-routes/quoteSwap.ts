@@ -260,8 +260,8 @@ export async function getRawSwapQuote(
   side: 'BUY' | 'SELL',
   slippagePct?: number,
 ): Promise<any> {
-  // Convert side to exactIn
-  const exactIn = side === 'SELL';
+  // Always use exactIn for consistent behavior - both BUY and SELL specify input amount
+  const exactIn = true;
 
   logger.info(
     `getRawSwapQuote: poolId=${poolId}, baseToken=${baseToken}, quoteToken=${quoteToken}, amount=${amount}, side=${side}, exactIn=${exactIn}`,
@@ -312,10 +312,13 @@ export async function getRawSwapQuote(
     throw new Error(`Quote token ${quoteToken} is not in pool ${poolId}`);
   }
 
-  // Determine which token is input and which is output based on exactIn flag
-  const [inputToken, outputToken] = exactIn
-    ? [resolvedBaseToken, resolvedQuoteToken]
-    : [resolvedQuoteToken, resolvedBaseToken];
+  // Determine which token is input and which is output based on side
+  // For BUY: quote token in, base token out (spending quote to get base)
+  // For SELL: base token in, quote token out (spending base to get quote)
+  const [inputToken, outputToken] =
+    side === 'BUY'
+      ? [resolvedQuoteToken, resolvedBaseToken] // BUY: quote token in, base token out
+      : [resolvedBaseToken, resolvedQuoteToken]; // SELL: base token in, quote token out
 
   logger.info(
     `Input token: ${inputToken.symbol}, address=${inputToken.address}, decimals=${inputToken.decimals}`,
@@ -324,23 +327,16 @@ export async function getRawSwapQuote(
     `Output token: ${outputToken.symbol}, address=${outputToken.address}, decimals=${outputToken.decimals}`,
   );
 
-  // Convert amount to string with proper decimals based on which token we're using
+  // Convert amount to string with proper decimals for the input token
   const inputDecimals = inputToken.decimals;
-  const outputDecimals = outputToken.decimals;
 
-  // Create amount with proper decimals for the token being used (input for exactIn, output for exactOut)
-  const amountInWithDecimals = exactIn
-    ? new Decimal(amount).mul(10 ** inputDecimals).toFixed(0)
-    : undefined;
-
-  const amountOutWithDecimals = !exactIn
-    ? new Decimal(amount).mul(10 ** outputDecimals).toFixed(0)
-    : undefined;
+  // Always use amountInWithDecimals since we're using exactIn
+  const amountInWithDecimals = new Decimal(amount)
+    .mul(10 ** inputDecimals)
+    .toFixed(0);
 
   logger.info(`Amount in human readable: ${amount}`);
-  logger.info(
-    `Amount in with decimals: ${amountInWithDecimals}, Amount out with decimals: ${amountOutWithDecimals}`,
-  );
+  logger.info(`Amount in with decimals: ${amountInWithDecimals}`);
 
   let result;
   if (ammPoolInfo.poolType === 'amm') {
@@ -351,7 +347,7 @@ export async function getRawSwapQuote(
       inputToken.address,
       outputToken.address,
       amountInWithDecimals,
-      amountOutWithDecimals,
+      undefined, // No amountOut since we're using exactIn
       slippagePct,
     );
   } else if (ammPoolInfo.poolType === 'cpmm') {
@@ -362,7 +358,7 @@ export async function getRawSwapQuote(
       inputToken.address,
       outputToken.address,
       amountInWithDecimals,
-      amountOutWithDecimals,
+      undefined, // No amountOut since we're using exactIn
       slippagePct,
     );
   } else {

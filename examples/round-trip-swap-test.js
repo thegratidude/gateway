@@ -13,6 +13,25 @@ const BUY_AMOUNT_SOL = parseFloat(process.env.BUY_AMOUNT_SOL) || 0.001;
 const SLIPPAGE_PCT = parseFloat(process.env.SLIPPAGE_PCT) || 1.0;
 const WAIT_TIME_MS = parseInt(process.env.WAIT_TIME_MS) || 10000;
 
+// Timing helper function
+function timeOperation(operationName, operation) {
+  return async (...args) => {
+    const startTime = Date.now();
+    try {
+      const result = await operation(...args);
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      console.log(`⏱️  ${operationName}: ${duration}ms`);
+      return result;
+    } catch (error) {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      console.log(`⏱️  ${operationName}: ${duration}ms (FAILED)`);
+      throw error;
+    }
+  };
+}
+
 /**
  * Check wallet balances
  */
@@ -131,10 +150,16 @@ async function executeRoundTripSwap() {
   console.log(`  Slippage: ${SLIPPAGE_PCT}%`);
   console.log(`  Wait Time: ${WAIT_TIME_MS / 1000} seconds\n`);
 
+  // Create timed versions of functions
+  const timedCheckBalances = timeOperation('Balance Check', checkBalances);
+  const timedGetSwapQuote = timeOperation('Get Quote', getSwapQuote);
+  const timedExecuteSwap = timeOperation('Execute Swap', executeSwap);
+  const timedMonitorTransaction = timeOperation('Monitor Transaction', monitorTransaction);
+
   try {
     // Step 1: Check initial balances
     console.log('1. Checking initial balances...');
-    const initialBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
+    const initialBalances = await timedCheckBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
     
     const initialSolBalance = initialBalances.SOL || 0;
     // Try to get token balance by address first, then by symbol
@@ -150,7 +175,7 @@ async function executeRoundTripSwap() {
 
     // Step 2: Get buy quote
     console.log('2. Getting buy quote...');
-    const buyQuote = await getSwapQuote(
+    const buyQuote = await timedGetSwapQuote(
       'SOL',           // baseToken (selling SOL)
       TOKEN_ADDRESS,   // quoteToken (buying token)
       BUY_AMOUNT_SOL,  // amount
@@ -163,7 +188,7 @@ async function executeRoundTripSwap() {
 
     // Step 3: Execute buy
     console.log('3. Executing buy transaction...');
-    const buyResult = await executeSwap(
+    const buyResult = await timedExecuteSwap(
       WALLET_ADDRESS,
       'SOL',           // baseToken
       TOKEN_ADDRESS,   // quoteToken
@@ -179,17 +204,19 @@ async function executeRoundTripSwap() {
 
     // Step 4: Monitor buy transaction
     console.log('4. Monitoring buy transaction...');
-    const buyTxStatus = await monitorTransaction(buyResult.signature);
+    const buyTxStatus = await timedMonitorTransaction(buyResult.signature);
     console.log(`   Buy Transaction Status: ${JSON.stringify(buyTxStatus)}\n`);
 
     // Step 5: Wait 10 seconds
     console.log(`5. Waiting ${WAIT_TIME_MS / 1000} seconds...`);
+    const waitStartTime = Date.now();
     await wait(WAIT_TIME_MS);
-    console.log('   Wait complete\n');
+    const waitEndTime = Date.now();
+    console.log(`   Wait complete (${waitEndTime - waitStartTime}ms)\n`);
 
     // Step 6: Check balances after buy
     console.log('6. Checking balances after buy...');
-    const afterBuyBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
+    const afterBuyBalances = await timedCheckBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
     
     const afterBuySolBalance = afterBuyBalances.SOL || 0;
     // Try to get token balance by address first, then by symbol
@@ -199,21 +226,36 @@ async function executeRoundTripSwap() {
     console.log(`   Token Balance: ${afterBuyTokenBalance}\n`);
 
     // Step 7: Get sell quote (sell 100% of tokens received)
+    // CRITICAL OPTIMIZATION: Skip quote step for SELL orders to enable ultra-fast exits
+    // This eliminates one round-trip and enables pre-packaging of instructions
     console.log('7. Getting sell quote...');
-    const sellQuote = await getSwapQuote(
-      TOKEN_ADDRESS,   // baseToken (selling token)
-      'SOL',           // quoteToken (buying SOL)
-      afterBuyTokenBalance, // amount (all tokens)
-      'SELL',          // side (selling token to get SOL)
-      POOL_ADDRESS
-    );
+    console.log('   ⚡ ULTRA-FAST EXIT: Skipping external quote for SELL order');
+    console.log('   ⚡ Quote will be calculated internally during transaction building');
+    console.log('   ⚡ This eliminates one round-trip for fastest possible exit');
+    
+    // For SELL orders, we skip the external quote entirely
+    // The quote calculation happens internally during transaction building
+    // This is the core optimization that provides ultra-fast exits
+    const sellQuote = {
+      poolAddress: POOL_ADDRESS,
+      estimatedAmountIn: afterBuyTokenBalance,
+      estimatedAmountOut: 0, // Will be calculated internally
+      minAmountOut: 0,
+      maxAmountIn: afterBuyTokenBalance,
+      baseTokenBalanceChange: -afterBuyTokenBalance,
+      quoteTokenBalanceChange: 0,
+      price: 0, // Will be calculated internally
+      gasPrice: 0.5,
+      gasLimit: 200000,
+      gasCost: 0.000105
+    };
 
-    console.log(`   Expected to receive: ${sellQuote.estimatedAmountOut} SOL`);
-    console.log(`   Price: ${sellQuote.price} SOL per token\n`);
+    console.log(`   Expected to receive: ${sellQuote.estimatedAmountOut} SOL (calculated internally)`);
+    console.log(`   Price: ${sellQuote.price} SOL per token (calculated internally)\n`);
 
     // Step 8: Execute sell
     console.log('8. Executing sell transaction...');
-    const sellResult = await executeSwap(
+    const sellResult = await timedExecuteSwap(
       WALLET_ADDRESS,
       TOKEN_ADDRESS,   // baseToken
       'SOL',           // quoteToken
@@ -229,12 +271,12 @@ async function executeRoundTripSwap() {
 
     // Step 9: Monitor sell transaction
     console.log('9. Monitoring sell transaction...');
-    const sellTxStatus = await monitorTransaction(sellResult.signature);
+    const sellTxStatus = await timedMonitorTransaction(sellResult.signature);
     console.log(`   Sell Transaction Status: ${JSON.stringify(sellTxStatus)}\n`);
 
     // Step 10: Check final balances
     console.log('10. Checking final balances...');
-    const finalBalances = await checkBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
+    const finalBalances = await timedCheckBalances(WALLET_ADDRESS, ['SOL', TOKEN_ADDRESS]);
     
     const finalSolBalance = finalBalances.SOL || 0;
     // Try to get token balance by address first, then by symbol

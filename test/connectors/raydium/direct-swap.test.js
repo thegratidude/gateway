@@ -140,8 +140,10 @@ describe('Raydium Direct Mint Address Swap Tests', () => {
         fail('Should have thrown an error for invalid pool address');
       } catch (error) {
         expect(error.response.status).toBe(400);
-        expect(error.response.data.message).toContain('Invalid mint address, pool address, or wallet address');
+        expect(error.response.data.message).toContain(
+          'Invalid mint address, pool address, or wallet address',
+        );
       }
     });
   });
-}); 
+});

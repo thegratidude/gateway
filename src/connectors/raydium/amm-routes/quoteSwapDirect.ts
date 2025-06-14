@@ -473,7 +473,8 @@ export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
     '/quote-swap-direct',
     {
       schema: {
-        description: 'Get swap quote for Raydium AMM using direct mint addresses',
+        description:
+          'Get swap quote for Raydium AMM using direct mint addresses',
         tags: ['raydium/amm'],
         querystring: {
           type: 'object',
@@ -495,7 +496,13 @@ export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
             side: { type: 'string', enum: ['BUY', 'SELL'], examples: ['SELL'] },
             slippagePct: { type: 'number', examples: [1] },
           },
-          required: ['poolAddress', 'baseTokenMint', 'quoteTokenMint', 'amount', 'side'],
+          required: [
+            'poolAddress',
+            'baseTokenMint',
+            'quoteTokenMint',
+            'amount',
+            'side',
+          ],
         },
         response: {
           200: {
@@ -536,7 +543,9 @@ export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
           new PublicKey(quoteTokenMint);
           new PublicKey(poolAddress);
         } catch (error) {
-          throw fastify.httpErrors.badRequest('Invalid mint address or pool address');
+          throw fastify.httpErrors.badRequest(
+            'Invalid mint address or pool address',
+          );
         }
 
         const result = await formatSwapQuoteDirect(
@@ -574,4 +583,4 @@ export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
       }
     },
   );
-}; 
+};

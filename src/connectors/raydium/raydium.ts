@@ -31,6 +31,37 @@ import { logger } from '../../services/logger';
 import { RaydiumConfig } from './raydium.config';
 import { isValidClmm, isValidAmm, isValidCpmm } from './raydium.utils';
 
+// Cache interfaces
+interface CachedPoolInfo {
+  data: any;
+  timestamp: number;
+  ttl: number; // Time to live in milliseconds
+}
+
+interface CachedQuote {
+  data: any;
+  timestamp: number;
+  ttl: number;
+  poolAddress: string;
+  baseToken: string;
+  quoteToken: string;
+  amount: number;
+  side: 'BUY' | 'SELL';
+  slippagePct: number;
+}
+
+interface PreAssembledSwap {
+  transaction: any;
+  timestamp: number;
+  ttl: number;
+  poolAddress: string;
+  baseToken: string;
+  quoteToken: string;
+  amount: number;
+  side: 'BUY' | 'SELL';
+  slippagePct: number;
+}
+
 export class Raydium {
   private static _instances: { [name: string]: Raydium };
   public solana: Solana; // Changed to public for use in route handlers
@@ -38,6 +69,16 @@ export class Raydium {
   public config: RaydiumConfig.NetworkConfig;
   public txVersion: TxVersion;
   private owner?: Keypair;
+
+  // Cache storage
+  private poolCache: Map<string, CachedPoolInfo> = new Map();
+  private quoteCache: Map<string, CachedQuote> = new Map();
+  private swapCache: Map<string, PreAssembledSwap> = new Map();
+
+  // Cache configuration
+  private readonly POOL_CACHE_TTL = 30000; // 30 seconds
+  private readonly QUOTE_CACHE_TTL = 5000; // 5 seconds
+  private readonly SWAP_CACHE_TTL = 10000; // 10 seconds
 
   private constructor() {
     this.config =
@@ -261,6 +302,12 @@ export class Raydium {
     | null
   > {
     try {
+      // Check cache first
+      const cached = this.getCachedPoolInfo(poolAddress);
+      if (cached) {
+        return cached;
+      }
+
       let poolInfo: ApiV3PoolInfoStandardItem | ApiV3PoolInfoStandardItemCpmm;
       let poolKeys: AmmV4Keys | AmmV5Keys;
 
@@ -287,7 +334,15 @@ export class Raydium {
         return null;
       }
 
-      return [poolInfo, poolKeys];
+      const result = [poolInfo, poolKeys] as [
+        ApiV3PoolInfoStandardItem | ApiV3PoolInfoStandardItemCpmm,
+        AmmV4Keys | AmmV5Keys,
+      ];
+
+      // Cache the result
+      this.setCachedPoolInfo(poolAddress, result);
+
+      return result;
     } catch (error) {
       logger.error(
         `Error getting AMM pool info from API for ${poolAddress}:`,
@@ -312,6 +367,12 @@ export class Raydium {
   // AMM Pool Methods
   async getAmmPoolInfo(poolAddress: string): Promise<AmmPoolInfo | null> {
     try {
+      // Check cache first
+      const cached = this.getCachedPoolInfo(`amm:${poolAddress}`);
+      if (cached) {
+        return cached;
+      }
+
       const poolType = await this.getPoolType(poolAddress);
       let poolInfo: AmmPoolInfo;
       if (poolType === 'amm') {
@@ -340,7 +401,6 @@ export class Raydium {
             decimals: 9, // Default LP token decimals for Raydium
           },
         };
-        return poolInfo;
       } else if (poolType === 'cpmm') {
         const rawPool = await this.raydiumSDK.cpmm.getRpcPoolInfos([
           poolAddress,
@@ -365,8 +425,14 @@ export class Raydium {
             decimals: 9, // Default LP token decimals for Raydium
           },
         };
-        return poolInfo;
+      } else {
+        return null;
       }
+
+      // Cache the result
+      this.setCachedPoolInfo(`amm:${poolAddress}`, poolInfo);
+
+      return poolInfo;
     } catch (error) {
       logger.error(`Error getting AMM pool info for ${poolAddress}:`, error);
       return null;
@@ -408,5 +474,216 @@ export class Raydium {
     const reversePairKey = this.getPairKey(quoteToken, baseToken);
 
     return pools[pairKey] || pools[reversePairKey] || null;
+  }
+
+  // Cache utility methods
+  private getCacheKey(type: string, ...params: string[]): string {
+    return `${type}:${params.join(':')}`;
+  }
+
+  private isCacheValid(
+    cacheEntry: CachedPoolInfo | CachedQuote | PreAssembledSwap,
+  ): boolean {
+    return Date.now() - cacheEntry.timestamp < cacheEntry.ttl;
+  }
+
+  private getCachedPoolInfo(poolAddress: string): any | null {
+    const cacheKey = this.getCacheKey('pool', poolAddress);
+    const cached = this.poolCache.get(cacheKey);
+
+    if (cached && this.isCacheValid(cached)) {
+      logger.debug(`Cache hit for pool ${poolAddress}`);
+      return cached.data;
+    }
+
+    if (cached) {
+      this.poolCache.delete(cacheKey);
+    }
+
+    return null;
+  }
+
+  private setCachedPoolInfo(poolAddress: string, data: any): void {
+    const cacheKey = this.getCacheKey('pool', poolAddress);
+    this.poolCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      ttl: this.POOL_CACHE_TTL,
+    });
+    logger.debug(`Cached pool info for ${poolAddress}`);
+  }
+
+  public getCachedQuote(
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: 'BUY' | 'SELL',
+    slippagePct: number,
+  ): any | null {
+    const cacheKey = this.getCacheKey(
+      'quote',
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount.toString(),
+      side,
+      slippagePct.toString(),
+    );
+    const cached = this.quoteCache.get(cacheKey);
+
+    if (cached && this.isCacheValid(cached)) {
+      logger.debug(`Cache hit for quote ${cacheKey}`);
+      return cached.data;
+    }
+
+    if (cached) {
+      this.quoteCache.delete(cacheKey);
+    }
+
+    return null;
+  }
+
+  public setCachedQuote(
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: 'BUY' | 'SELL',
+    slippagePct: number,
+    data: any,
+  ): void {
+    const cacheKey = this.getCacheKey(
+      'quote',
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount.toString(),
+      side,
+      slippagePct.toString(),
+    );
+    this.quoteCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      ttl: this.QUOTE_CACHE_TTL,
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount,
+      side,
+      slippagePct,
+    });
+    logger.debug(`Cached quote for ${cacheKey}`);
+  }
+
+  public getCachedSwap(
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: 'BUY' | 'SELL',
+    slippagePct: number,
+  ): any | null {
+    const cacheKey = this.getCacheKey(
+      'swap',
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount.toString(),
+      side,
+      slippagePct.toString(),
+    );
+    const cached = this.swapCache.get(cacheKey);
+
+    if (cached && this.isCacheValid(cached)) {
+      logger.debug(`Cache hit for swap ${cacheKey}`);
+      return cached.transaction;
+    }
+
+    if (cached) {
+      this.swapCache.delete(cacheKey);
+    }
+
+    return null;
+  }
+
+  public setCachedSwap(
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: 'BUY' | 'SELL',
+    slippagePct: number,
+    transaction: any,
+  ): void {
+    const cacheKey = this.getCacheKey(
+      'swap',
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount.toString(),
+      side,
+      slippagePct.toString(),
+    );
+    this.swapCache.set(cacheKey, {
+      transaction,
+      timestamp: Date.now(),
+      ttl: this.SWAP_CACHE_TTL,
+      poolAddress,
+      baseToken,
+      quoteToken,
+      amount,
+      side,
+      slippagePct,
+    });
+    logger.debug(`Cached swap transaction for ${cacheKey}`);
+  }
+
+  // Cache cleanup
+  private cleanupExpiredCache(): void {
+    const now = Date.now();
+
+    // Cleanup pool cache
+    for (const [key, entry] of this.poolCache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.poolCache.delete(key);
+      }
+    }
+
+    // Cleanup quote cache
+    for (const [key, entry] of this.quoteCache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.quoteCache.delete(key);
+      }
+    }
+
+    // Cleanup swap cache
+    for (const [key, entry] of this.swapCache.entries()) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.swapCache.delete(key);
+      }
+    }
+  }
+
+  // Get cache statistics
+  getCacheStats(): {
+    poolCache: number;
+    quoteCache: number;
+    swapCache: number;
+  } {
+    this.cleanupExpiredCache();
+    return {
+      poolCache: this.poolCache.size,
+      quoteCache: this.quoteCache.size,
+      swapCache: this.swapCache.size,
+    };
+  }
+
+  // Clear all caches
+  clearCache(): void {
+    this.poolCache.clear();
+    this.quoteCache.clear();
+    this.swapCache.clear();
+    logger.info('All caches cleared');
   }
 }

@@ -315,4 +315,4 @@ export const executeSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
       }
     },
   );
-}; 
+};
