@@ -770,6 +770,57 @@ export class Solana {
     }
   }
 
+  /**
+   * Optimized confirmation method specifically for SELL orders
+   * Uses faster commitment and shorter timeout for ultra-fast exits
+   */
+  public async confirmTransactionSELL(
+    signature: string,
+    timeout: number = 1500, // Faster timeout for SELL orders
+  ): Promise<{ confirmed: boolean; txData?: any }> {
+    try {
+      const confirmationPromise = new Promise<{
+        confirmed: boolean;
+        txData?: any;
+      }>(async (resolve, reject) => {
+        // Use 'confirmed' commitment but with faster timeout for SELL orders
+        const txData = await this.connection.getTransaction(signature, {
+          commitment: 'confirmed',
+          maxSupportedTransactionVersion: 0,
+        });
+
+        if (!txData) {
+          return resolve({ confirmed: false });
+        }
+
+        // Check if transaction is already confirmed but had an error
+        if (txData.meta?.err) {
+          return reject(
+            new Error(
+              `Transaction failed with error: ${JSON.stringify(txData.meta.err)}`,
+            ),
+          );
+        }
+
+        // For SELL orders, we can be more lenient with confirmation status
+        const status = await this.connection.getSignatureStatus(signature);
+        const isConfirmed =
+          status.value?.confirmationStatus === 'confirmed' ||
+          status.value?.confirmationStatus === 'finalized';
+
+        resolve({ confirmed: !!isConfirmed, txData });
+      });
+
+      const timeoutPromise = new Promise<{ confirmed: boolean }>((_, reject) =>
+        setTimeout(() => reject(new Error('SELL confirmation timed out')), timeout),
+      );
+
+      return await Promise.race([confirmationPromise, timeoutPromise]);
+    } catch (error: any) {
+      throw new Error(`Failed to confirm SELL transaction: ${error.message}`);
+    }
+  }
+
   private getFee(txData: any): number {
     if (!txData?.meta) {
       return 0;
@@ -1059,28 +1110,29 @@ export class Solana {
     return this._sendAndConfirmRawTransaction(serializedTx);
   }
 
-  // Create a private method to handle the actual sending
-  private async _sendAndConfirmRawTransaction(
-    serializedTx: Buffer | Uint8Array,
+  /**
+   * Optimized send and confirm method specifically for SELL orders
+   * Uses faster confirmation strategy for ultra-fast exits
+   */
+  async sendAndConfirmRawTransactionSELL(
+    transaction: VersionedTransaction | Transaction,
   ): Promise<{ confirmed: boolean; signature: string; txData: any }> {
-    let retryCount = 0;
-    while (retryCount < this.config.retryCount) {
-      const signature = await this.connection.sendRawTransaction(serializedTx, {
-        skipPreflight: true,
-      });
-      const { confirmed, txData } = await this.confirmTransaction(signature);
-      logger.info(
-        `[${retryCount + 1}/${this.config.retryCount}] Transaction ${signature} status: ${confirmed ? 'confirmed' : 'unconfirmed'}`,
-      );
-      if (confirmed && txData) {
-        return { confirmed, signature, txData };
-      }
-      retryCount++;
-      await new Promise((resolve) =>
-        setTimeout(resolve, this.config.retryIntervalMs),
-      );
+    // Convert Transaction to VersionedTransaction if necessary
+    if (!(transaction instanceof VersionedTransaction)) {
+      // Ensure transaction is properly prepared
+      const { blockhash } = await this.connection.getLatestBlockhash();
+      transaction.recentBlockhash = transaction.recentBlockhash || blockhash;
+      transaction.feePayer =
+        transaction.feePayer || transaction.signatures[0]?.publicKey || null;
+
+      // Get serialized transaction bytes
+      const serializedTx = transaction.serialize();
+      return this._sendAndConfirmRawTransactionSELL(serializedTx);
     }
-    return { confirmed: false, signature: '', txData: null };
+
+    // For VersionedTransaction, use optimized logic
+    const serializedTx = transaction.serialize();
+    return this._sendAndConfirmRawTransactionSELL(serializedTx);
   }
 
   async sendRawTransaction(
@@ -1467,5 +1519,53 @@ export class Solana {
         `Increasing priority fee to ${currentPriorityFee} lamports/CU (max fee of ${(currentPriorityFee * computeUnitsToUse * LAMPORT_TO_SOL).toFixed(6)} SOL`,
       );
     }
+  }
+
+  // Create a private method to handle the actual sending
+  private async _sendAndConfirmRawTransaction(
+    serializedTx: Buffer | Uint8Array,
+  ): Promise<{ confirmed: boolean; signature: string; txData: any }> {
+    let retryCount = 0;
+    while (retryCount < this.config.retryCount) {
+      const signature = await this.connection.sendRawTransaction(serializedTx, {
+        skipPreflight: true,
+      });
+      const { confirmed, txData } = await this.confirmTransaction(signature);
+      logger.info(
+        `[${retryCount + 1}/${this.config.retryCount}] Transaction ${signature} status: ${confirmed ? 'confirmed' : 'unconfirmed'}`,
+      );
+      if (confirmed && txData) {
+        return { confirmed, signature, txData };
+      }
+      retryCount++;
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.config.retryIntervalMs),
+      );
+    }
+    return { confirmed: false, signature: '', txData: null };
+  }
+
+  // Create a private method to handle optimized SELL sending
+  private async _sendAndConfirmRawTransactionSELL(
+    serializedTx: Buffer | Uint8Array,
+  ): Promise<{ confirmed: boolean; signature: string; txData: any }> {
+    let retryCount = 0;
+    while (retryCount < this.config.retryCount) {
+      const signature = await this.connection.sendRawTransaction(serializedTx, {
+        skipPreflight: true, // Always skip preflight for SELL orders
+      });
+      const { confirmed, txData } = await this.confirmTransactionSELL(signature);
+      logger.info(
+        `[${retryCount + 1}/${this.config.retryCount}] SELL Transaction ${signature} status: ${confirmed ? 'confirmed' : 'unconfirmed'}`,
+      );
+      if (confirmed && txData) {
+        return { confirmed, signature, txData };
+      }
+      retryCount++;
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.config.retryIntervalMs),
+      );
+    }
+    return { confirmed: false, signature: '', txData: null };
   }
 }

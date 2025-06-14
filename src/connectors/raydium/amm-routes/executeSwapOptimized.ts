@@ -14,6 +14,15 @@ import { Raydium } from '../raydium';
 
 import { getRawSwapQuote } from './quoteSwap';
 
+// Pre-computed priority fees for ultra-fast SELL operations
+const SELL_PRIORITY_FEES: Record<string, number> = {
+  'SOL/USDC': 0.5,
+  'SOL/RAY': 0.4,
+  'RAY/SOL': 0.3,
+  'USDC/SOL': 0.5,
+  default: 0.4,
+};
+
 // Pre-assembly manager for ultra-fast swaps
 class PreAssemblyManager {
   private raydium: Raydium;
@@ -24,6 +33,35 @@ class PreAssemblyManager {
   constructor(raydium: Raydium, solana: Solana) {
     this.raydium = raydium;
     this.solana = solana;
+  }
+
+  /**
+   * Get optimized priority fee for SELL orders
+   */
+  private getOptimizedPriorityFee(
+    baseToken: string,
+    quoteToken: string,
+    side: 'BUY' | 'SELL',
+  ): number {
+    if (side !== 'SELL') {
+      return 0; // Use default calculation for BUY orders
+    }
+
+    const pairKey = `${baseToken}/${quoteToken}`;
+    const reversePairKey = `${quoteToken}/${baseToken}`;
+
+    // Try exact match first
+    if (SELL_PRIORITY_FEES[pairKey]) {
+      return SELL_PRIORITY_FEES[pairKey];
+    }
+
+    // Try reverse pair
+    if (SELL_PRIORITY_FEES[reversePairKey]) {
+      return SELL_PRIORITY_FEES[reversePairKey];
+    }
+
+    // Fall back to default
+    return SELL_PRIORITY_FEES.default;
   }
 
   async preAssembleSwap(
@@ -72,10 +110,26 @@ class PreAssemblyManager {
       const outputToken = quote.outputToken;
 
       const COMPUTE_UNITS = 600000;
+      
+      // Use optimized priority fees for SELL orders
+      const optimizedPriorityFee = this.getOptimizedPriorityFee(
+        baseToken,
+        quoteToken,
+        side,
+      );
       const currentPriorityFee =
-        (await this.solana.estimateGas()) * 1e9 - BASE_FEE;
+        optimizedPriorityFee > 0
+          ? optimizedPriorityFee * 1e9 // Convert from SOL to lamports
+          : (await this.solana.estimateGas()) * 1e9 - BASE_FEE;
+
       const priorityFeePerCU = Math.floor(
         (currentPriorityFee * 1e6) / COMPUTE_UNITS,
+      );
+
+      logger.info(
+        `Using ${side === 'SELL' ? 'optimized' : 'standard'} priority fee: ${(
+          currentPriorityFee / 1e9
+        ).toFixed(6)} SOL`,
       );
 
       let transaction: VersionedTransaction;
@@ -200,10 +254,18 @@ async function executeSwapOptimized(
 
   // Sign and execute the transaction
   transaction.sign([wallet]);
-  await solana.simulateTransaction(transaction as VersionedTransaction);
+  
+  // Skip simulation for SELL orders to enable ultra-fast exits
+  if (side !== 'SELL') {
+    await solana.simulateTransaction(transaction as VersionedTransaction);
+  } else {
+    logger.info('⚡ ULTRA-FAST SELL: Skipping transaction simulation for faster execution');
+  }
 
-  const { confirmed, signature, txData } =
-    await solana.sendAndConfirmRawTransaction(transaction);
+  // Use optimized confirmation for SELL orders
+  const { confirmed, signature, txData } = side === 'SELL'
+    ? await solana.sendAndConfirmRawTransactionSELL(transaction)
+    : await solana.sendAndConfirmRawTransaction(transaction);
 
   if (confirmed && txData) {
     const { baseTokenBalanceChange, quoteTokenBalanceChange } =
