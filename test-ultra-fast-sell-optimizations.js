@@ -125,7 +125,7 @@ async function testBuyOperation() {
     
     // Step 2: Execute BUY swap (SOL → USDC)
     const buyResult = await timeStep('Execute BUY Swap (SOL→USDC)', () =>
-      executeOptimizedSwap(WALLET_ADDRESS, 'SOL', 'USDC', SWAP_AMOUNT, 'SELL', POOL_ADDRESS), 'buy'
+      executeOptimizedSwap(WALLET_ADDRESS, 'SOL', 'USDC', SWAP_AMOUNT, 'BUY', POOL_ADDRESS), 'buy'
     );
 
     // Step 3: Monitor transaction
@@ -176,17 +176,25 @@ async function testSellOperation(usdcAmount) {
       checkBalances(WALLET_ADDRESS), 'sell'
     );
     
-    // Step 2: Execute SELL swap (USDC → SOL) with optimizations
+    // Step 2: Get the actual USDC balance to sell (100% of balance)
+    const actualUsdcBalance = initialBalances.USDC || 0;
+    if (actualUsdcBalance <= 0) {
+      throw new Error('No USDC balance to sell');
+    }
+    
+    console.log(`   Selling 100% of USDC balance: ${actualUsdcBalance.toFixed(6)} USDC`);
+    
+    // Step 3: Execute SELL swap (USDC → SOL) with optimizations
     const sellResult = await timeStep('Execute SELL Swap (USDC→SOL)', () =>
-      executeOptimizedSwap(WALLET_ADDRESS, 'USDC', 'SOL', usdcAmount, 'SELL', POOL_ADDRESS), 'sell'
+      executeOptimizedSwap(WALLET_ADDRESS, 'USDC', 'SOL', actualUsdcBalance, 'SELL', POOL_ADDRESS), 'sell'
     );
 
-    // Step 3: Monitor transaction
+    // Step 4: Monitor transaction
     await timeStep('Monitor Transaction', () =>
       monitorTransaction(sellResult.signature), 'sell'
     );
 
-    // Step 4: Check final balances
+    // Step 5: Check final balances
     const finalBalances = await timeStep('Check Final Balances', () =>
       checkBalances(WALLET_ADDRESS), 'sell'
     );

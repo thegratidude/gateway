@@ -1,20 +1,19 @@
-import { VersionedTransaction } from '@solana/web3.js';
-import BN from 'bn.js';
 import { FastifyPluginAsync, FastifyInstance } from 'fastify';
+import { VersionedTransaction } from '@solana/web3.js';
+import { BN } from 'bn.js';
 
-import { Solana, BASE_FEE } from '../../../chains/solana/solana';
+import { logger } from '../../../services/logger';
+import { Solana } from '../../../chains/solana/solana';
+import { Raydium } from '../../../connectors/raydium/raydium';
+import { getRawSwapQuote } from './quoteSwap';
 import {
-  ExecuteSwapResponse,
+  ExecuteSwapRequestType,
   ExecuteSwapResponseType,
   ExecuteSwapRequest,
-  ExecuteSwapRequestType,
+  ExecuteSwapResponse,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
-import { Raydium } from '../raydium';
 
-import { getRawSwapQuote } from './quoteSwap';
-
-// Pre-computed priority fees for ultra-fast SELL operations
+// Pre-computed priority fees for common SELL pairs (in SOL)
 const SELL_PRIORITY_FEES: Record<string, number> = {
   'SOL/USDC': 0.5,
   'SOL/RAY': 0.4,
@@ -23,7 +22,11 @@ const SELL_PRIORITY_FEES: Record<string, number> = {
   default: 0.4,
 };
 
-// Pre-assembly manager for ultra-fast swaps
+const BASE_FEE = 5000; // Base fee in lamports
+
+/**
+ * Pre-assembly manager for optimized swap transactions
+ */
 class PreAssemblyManager {
   private raydium: Raydium;
   private solana: Solana;
@@ -134,40 +137,90 @@ class PreAssemblyManager {
 
       let transaction: VersionedTransaction;
 
-      // Build transaction based on pool type
+      // Get transaction based on pool type
       if (poolInfo.poolType === 'amm') {
-        // Always use exact input for consistent behavior - both BUY and SELL specify input amount
-        ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
-          poolInfo: quote.poolInfo,
-          poolKeys: quote.poolKeys,
-          amountIn: new BN(quote.amountIn),
-          amountOut: quote.minAmountOut,
-          fixedSide: 'in',
-          inputMint: inputToken.address,
-          txVersion: this.raydium.txVersion,
-          computeBudgetConfig: {
-            units: COMPUTE_UNITS,
-            microLamports: priorityFeePerCU,
-          },
-        })) as { transaction: VersionedTransaction });
+        // AMM swap
+        const [poolInfoData, poolKeysData] =
+          await this.raydium.getPoolfromAPI(poolAddress);
+
+        if (side === 'BUY') {
+          // AMM swap base out (exact output)
+          ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
+            poolInfo: poolInfoData,
+            poolKeys: poolKeysData,
+            amountIn: quote.maxAmountIn,
+            amountOut: new BN(quote.amountOut),
+            fixedSide: 'out',
+            inputMint: inputToken.address,
+            txVersion: this.raydium.txVersion,
+            computeBudgetConfig: {
+              units: COMPUTE_UNITS,
+              microLamports: priorityFeePerCU,
+            },
+          })) as { transaction: VersionedTransaction });
+        } else {
+          // AMM swap (exact input)
+          ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
+            poolInfo: poolInfoData,
+            poolKeys: poolKeysData,
+            amountIn: new BN(quote.amountIn),
+            amountOut: quote.minAmountOut,
+            fixedSide: 'in',
+            inputMint: inputToken.address,
+            txVersion: this.raydium.txVersion,
+            computeBudgetConfig: {
+              units: COMPUTE_UNITS,
+              microLamports: priorityFeePerCU,
+            },
+          })) as { transaction: VersionedTransaction });
+        }
       } else if (poolInfo.poolType === 'cpmm') {
-        // Always use exact input for consistent behavior - both BUY and SELL specify input amount
-        ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
-          poolInfo: quote.poolInfo,
-          poolKeys: quote.poolKeys,
-          inputAmount: quote.amountIn,
-          swapResult: {
-            sourceAmountSwapped: quote.amountIn,
-            destinationAmountSwapped: quote.amountOut,
-          },
-          slippage: slippagePct / 100,
-          baseIn: inputToken.address === quote.poolInfo.mintA.address,
-          txVersion: this.raydium.txVersion,
-          computeBudgetConfig: {
-            units: COMPUTE_UNITS,
-            microLamports: priorityFeePerCU,
-          },
-        })) as { transaction: VersionedTransaction });
+        // CPMM swap
+        const [poolInfoData, poolKeysData] =
+          await this.raydium.getPoolfromAPI(poolAddress);
+        const rpcData = await this.raydium.raydiumSDK.cpmm.getRpcPoolInfo(
+          poolAddress,
+          true,
+        );
+        const baseIn = inputToken.address === poolInfoData.mintA.address;
+
+        if (side === 'BUY') {
+          // CPMM swap base out (exact output)
+          ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
+            poolInfo: poolInfoData,
+            poolKeys: poolKeysData,
+            inputAmount: quote.maxAmountIn,
+            swapResult: {
+              sourceAmountSwapped: quote.maxAmountIn,
+              destinationAmountSwapped: new BN(quote.amountOut),
+            },
+            slippage: slippagePct / 100,
+            baseIn,
+            txVersion: this.raydium.txVersion,
+            computeBudgetConfig: {
+              units: COMPUTE_UNITS,
+              microLamports: priorityFeePerCU,
+            },
+          })) as { transaction: VersionedTransaction });
+        } else {
+          // CPMM swap (exact input)
+          ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
+            poolInfo: poolInfoData,
+            poolKeys: poolKeysData,
+            inputAmount: new BN(quote.amountIn),
+            swapResult: {
+              sourceAmountSwapped: new BN(quote.amountIn),
+              destinationAmountSwapped: quote.minAmountOut,
+            },
+            slippage: slippagePct / 100,
+            baseIn,
+            txVersion: this.raydium.txVersion,
+            computeBudgetConfig: {
+              units: COMPUTE_UNITS,
+              microLamports: priorityFeePerCU,
+            },
+          })) as { transaction: VersionedTransaction });
+        }
       } else {
         throw new Error(`Unsupported pool type: ${poolInfo.poolType}`);
       }
@@ -185,7 +238,7 @@ class PreAssemblyManager {
 
       return transaction;
     } catch (error) {
-      logger.error('Error pre-assembling swap:', error);
+      logger.error(`Error pre-assembling swap: ${error.message}`);
       return null;
     }
   }
@@ -233,8 +286,25 @@ async function executeSwapOptimized(
   // Use configured slippage if not provided
   const effectiveSlippage = slippagePct || raydium.getSlippagePct();
 
+  // For SELL operations, support automatic 100% balance selling
+  let effectiveAmount = amount;
+  if (side === 'SELL' && (amount <= 0 || amount === -1)) {
+    // Get current balance of the base token (what we're selling)
+    const balances = await solana.getBalance(wallet, [baseToken]);
+    const baseTokenBalance = balances[baseToken] || 0;
+    
+    if (baseTokenBalance <= 0) {
+      throw fastify.httpErrors.badRequest(`No ${baseToken} balance to sell`);
+    }
+    
+    effectiveAmount = baseTokenBalance;
+    logger.info(
+      `⚡ ULTRA-FAST SELL: Automatically selling 100% of ${baseToken} balance (${effectiveAmount.toFixed(6)})`,
+    );
+  }
+
   logger.info(
-    `Executing optimized ${amount.toFixed(4)} ${side} swap in pool ${poolAddress}`,
+    `Executing optimized ${effectiveAmount.toFixed(4)} ${side} swap in pool ${poolAddress}`,
   );
 
   // Pre-assemble the transaction
@@ -243,7 +313,7 @@ async function executeSwapOptimized(
     poolAddress,
     baseToken,
     quoteToken,
-    amount,
+    effectiveAmount,
     side,
     effectiveSlippage,
   );
@@ -259,7 +329,9 @@ async function executeSwapOptimized(
   if (side !== 'SELL') {
     await solana.simulateTransaction(transaction as VersionedTransaction);
   } else {
-    logger.info('⚡ ULTRA-FAST SELL: Skipping transaction simulation for faster execution');
+    logger.info(
+      '⚡ ULTRA-FAST SELL: Skipping transaction simulation for faster execution',
+    );
   }
 
   // Use optimized confirmation for SELL orders
