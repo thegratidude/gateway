@@ -15,11 +15,11 @@ import {
 
 // Pre-computed priority fees for common SELL pairs (in SOL)
 const SELL_PRIORITY_FEES: Record<string, number> = {
-  'SOL/USDC': 0.5,
-  'SOL/RAY': 0.4,
-  'RAY/SOL': 0.3,
-  'USDC/SOL': 0.5,
-  default: 0.4,
+  'SOL/USDC': 0.0001,
+  'SOL/RAY': 0.0001,
+  'RAY/SOL': 0.0001,
+  'USDC/SOL': 0.0001,
+  default: 0.0001,
 };
 
 const BASE_FEE = 5000; // Base fee in lamports
@@ -74,6 +74,7 @@ class PreAssemblyManager {
     amount: number,
     side: 'BUY' | 'SELL',
     slippagePct: number,
+    swapDirection?: 'exactAmountIn' | 'exactAmountOut',
   ): Promise<VersionedTransaction | null> {
     try {
       // Check if we have a cached transaction
@@ -143,7 +144,17 @@ class PreAssemblyManager {
         const [poolInfoData, poolKeysData] =
           await this.raydium.getPoolfromAPI(poolAddress);
 
-        if (side === 'BUY') {
+        // Determine fixedSide based on swapDirection parameter or default behavior
+        const effectiveSwapDirection =
+          swapDirection ||
+          (side === 'BUY' ? 'exactAmountOut' : 'exactAmountIn');
+        const fixedSide = effectiveSwapDirection === 'exactAmountIn' ? 'in' : 'out';
+
+        logger.info(
+          `Using ${effectiveSwapDirection} for ${side} order (fixedSide: ${fixedSide})`,
+        );
+
+        if (fixedSide === 'out') {
           // AMM swap base out (exact output)
           ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
             poolInfo: poolInfoData,
@@ -184,7 +195,17 @@ class PreAssemblyManager {
         );
         const baseIn = inputToken.address === poolInfoData.mintA.address;
 
-        if (side === 'BUY') {
+        // Determine fixedSide based on swapDirection parameter or default behavior
+        const effectiveSwapDirection =
+          swapDirection ||
+          (side === 'BUY' ? 'exactAmountOut' : 'exactAmountIn');
+        const fixedSide = effectiveSwapDirection === 'exactAmountIn' ? 'in' : 'out';
+
+        logger.info(
+          `CPMM: Using ${effectiveSwapDirection} for ${side} order (fixedSide: ${fixedSide})`,
+        );
+
+        if (fixedSide === 'out') {
           // CPMM swap base out (exact output)
           ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
             poolInfo: poolInfoData,
@@ -272,6 +293,7 @@ async function executeSwapOptimized(
   side: 'BUY' | 'SELL',
   poolAddress: string,
   slippagePct?: number,
+  swapDirection?: 'exactAmountIn' | 'exactAmountOut',
 ): Promise<ExecuteSwapResponseType> {
   const solana = await Solana.getInstance(network);
   const raydium = await Raydium.getInstance(network);
@@ -316,6 +338,7 @@ async function executeSwapOptimized(
     effectiveAmount,
     side,
     effectiveSlippage,
+    swapDirection,
   );
 
   if (!transaction) {
@@ -405,6 +428,7 @@ export const executeSwapOptimizedRoute: FastifyPluginAsync = async (
             side: { type: 'string', examples: ['SELL'] },
             poolAddress: { type: 'string', examples: [''] },
             slippagePct: { type: 'number', examples: [1] },
+            swapDirection: { type: 'string', examples: ['exactAmountIn'] },
           },
         },
         response: { 200: ExecuteSwapResponse },
@@ -421,6 +445,7 @@ export const executeSwapOptimizedRoute: FastifyPluginAsync = async (
           side,
           poolAddress,
           slippagePct,
+          swapDirection,
         } = request.body;
         const networkToUse = network || 'mainnet-beta';
 
@@ -450,6 +475,7 @@ export const executeSwapOptimizedRoute: FastifyPluginAsync = async (
           side as 'BUY' | 'SELL',
           poolAddressToUse,
           slippagePct,
+          swapDirection as 'exactAmountIn' | 'exactAmountOut' | undefined,
         );
       } catch (e) {
         logger.error(e);

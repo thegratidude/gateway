@@ -12,6 +12,13 @@ export const GetSwapQuoteRequest = Type.Object(
     }),
     slippagePct: Type.Optional(Type.Number()),
     poolAddress: Type.Optional(Type.String()),
+    swapDirection: Type.Optional(
+      Type.String({
+        enum: ['exactAmountIn', 'exactAmountOut'],
+        description:
+          'Swap direction - exactAmountIn for fixed input, exactAmountOut for fixed output',
+      }),
+    ),
   },
   { $id: 'GetSwapQuoteRequest' },
 );
@@ -48,6 +55,13 @@ export const ExecuteSwapRequest = Type.Object(
     }),
     slippagePct: Type.Optional(Type.Number()),
     poolAddress: Type.Optional(Type.String()),
+    swapDirection: Type.Optional(
+      Type.String({
+        enum: ['exactAmountIn', 'exactAmountOut'],
+        description:
+          'Swap direction - exactAmountIn for fixed input, exactAmountOut for fixed output',
+      }),
+    ),
   },
   { $id: 'ExecuteSwapRequest' },
 );

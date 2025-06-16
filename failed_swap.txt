@@ -1,0 +1,98 @@
+2025-06-16 06:01:23 | info | 	Executing optimized 504051.7591 SELL swap in pool EUcZB2c4Ep1C7owsiDdJtzoHbqSvtBrADdZWaToHvxX4
+2025-06-16 06:01:23 | info | 	getRawSwapQuote: poolId=EUcZB2c4Ep1C7owsiDdJtzoHbqSvtBrADdZWaToHvxX4, baseToken=AticNUcrZZL8AJSPGmfW4duAqzmLVuNFr2mpg7RH5YBu, quoteToken=So11111111111111111111111111111111111111112, amount=504051.759062073, side=SELL, exactIn=true
+2025-06-16 06:01:23 | info | 	Pool type: amm
+2025-06-16 06:01:23 | error | 	Error pre-assembling swap: Token not found: AticNUcrZZL8AJSPGmfW4duAqzmLVuNFr2mpg7RH5YBu
+2025-06-16 06:01:23 | error | 	Failed to pre-assemble swap transaction {}
+ammPoolInfo {
+  EUcZB2c4Ep1C7owsiDdJtzoHbqSvtBrADdZWaToHvxX4: {
+    status: <BN: 6>,
+    nonce: <BN: fe>,
+    maxOrder: <BN: 7>,
+    depth: <BN: 3>,
+    baseDecimal: <BN: 6>,
+    quoteDecimal: <BN: 9>,
+    state: <BN: 1>,
+    resetFlag: <BN: 0>,
+    minSize: <BN: 174876e800>,
+    volMaxCutRatio: <BN: 1f4>,
+    amountWaveRatio: <BN: 4c4b40>,
+    baseLotSize: <BN: 5f5e100>,
+    quoteLotSize: <BN: a>,
+    minPriceMultiplier: <BN: 1>,
+    maxPriceMultiplier: <BN: 3b9aca00>,
+    systemDecimalValue: <BN: 3b9aca00>,
+    minSeparateNumerator: <BN: 5>,
+    minSeparateDenominator: <BN: 2710>,
+    tradeFeeNumerator: <BN: 19>,
+    tradeFeeDenominator: <BN: 2710>,
+    pnlNumerator: <BN: c>,
+    pnlDenominator: <BN: 64>,
+    swapFeeNumerator: <BN: 19>,
+    swapFeeDenominator: <BN: 2710>,
+    baseNeedTakePnl: <BN: 0>,
+    quoteNeedTakePnl: <BN: 0>,
+    quoteTotalPnl: <BN: 0>,
+    baseTotalPnl: <BN: 0>,
+    poolOpenTime: <BN: 6850227c>,
+    punishPcAmount: <BN: 0>,
+    punishCoinAmount: <BN: 0>,
+    orderbookToInitTime: <BN: 0>,
+    swapBaseInAmount: <BN: 4e2be1a4ddcf>,
+    swapQuoteOutAmount: <BN: 21ca24c77>,
+    swapBase2QuoteFee: <BN: 14c493a>,
+    swapQuoteInAmount: <BN: 207325fe5>,
+    swapBaseOutAmount: <BN: 4a7c81fc0196>,
+    swapQuote2BaseFee: <BN: 32079aa6fa>,
+    baseVault: PublicKey [PublicKey(AticNUcrZZL8AJSPGmfW4duAqzmLVuNFr2mpg7RH5YBu)] {
+      _bn: <BN: 92f8da1bd9fa52740adeab8ba70583f036435ca2f80cae689fda13ce6ee20c74>
+    },
+    quoteVault: PublicKey [PublicKey(BB9NMksVKDZCUjZioyfoMGJVy2FXbKjwszi2zSdzWD3L)] {
+      _bn: <BN: 972e23ac9974fa034d2fd98aba95e4046892cb7b82daac1712aff82900e1598f>
+    },
+    baseMint: PublicKey [PublicKey(GQTKYNW8uRCTX1CXMzpWTQHnN7fycHio8FbZwwEEksAG)] {
+      _bn: <BN: e4e16c189428f34a943ea128f9ede868545f0aed14b615cb2a208ce48da18749>
+    },
+    quoteMint: PublicKey [PublicKey(So11111111111111111111111111111111111111112)] {
+      _bn: <BN: 69b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001>
+    },
+    lpMint: PublicKey [PublicKey(EJSdpmyeWoyasneXkgiiXJsFsqpF7AY5D6msNmx337we)] {
+      _bn: <BN: c59fca0d0639c82294a56548076a24958640ed18e34643e5a146248c32471c89>
+    },
+    openOrders: PublicKey [PublicKey(NboE2mzLVGczyeJuSUV1VHBu9LbVF5jrvC2jE2SBiFr)] {
+      _bn: <BN: 5888ac44e76d627f89d21697ea4ea87d1b1a2fdcbb8c0ce797122319af00521>
+    },
+    marketId: PublicKey [PublicKey(2sh7bAL2evWabzt1KGSGBDpTTYQNNCtT9BadQt2mSdJ7)] {
+      _bn: <BN: 1bd8157f6ef18ff99822b5a1725f3ca6b838a4296def85f25aeecfd9ecf8f578>
+    },
+    marketProgramId: PublicKey [PublicKey(srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX)] {
+      _bn: <BN: d0751a8282da61305fe299c37b998e58471db1135037310f8be1045a60af6ee>
+    },
+    targetOrders: PublicKey [PublicKey(GHoXZUGiSw6dLniFKz4kq5gemTDYLbxbwPL4z2hUtzhY)] {
+      _bn: <BN: e32d3478b4e5b9b5c80f17765b1a246bd80f7b2b4f3c6590d0818ef6a781839b>
+    },
+    withdrawQueue: PublicKey [PublicKey(11111111111111111111111111111111)] {
+      _bn: <BN: 0>
+    },
+    lpVault: PublicKey [PublicKey(11111111111111111111111111111111)] {
+      _bn: <BN: 0>
+    },
+    owner: PublicKey [PublicKey(GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ)] {
+      _bn: <BN: e5b62b65cb3bbda6f56888e66fee8e64dc5560199c0f88b11fe273bd059e8aa1>
+    },
+    lpReserve: <BN: 48c27395000>,
+    padding: [ <BN: 0>, <BN: 323>, <BN: 0> ],
+    programId: PublicKey [PublicKey(675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8)] {
+      _bn: <BN: 4bd949c43602c33f207790ed16a3524ca1b9975cf121a2a90cffec7df8b68acd>
+    },
+    baseReserve: <BN: 1ca6eb20c1c39>,
+    mintAAmount: <BN: 1ca6eb20c1c39>,
+    mintBAmount: <BN: b8ecb876e>,
+    quoteReserve: <BN: b8ecb876e>,
+    poolPrice: 9.8482631026562666245e-8
+  }
+}
+2025-06-16 06:01:23 | info | 	Executing optimized 504051.7591 SELL swap in pool EUcZB2c4Ep1C7owsiDdJtzoHbqSvtBrADdZWaToHvxX4
+2025-06-16 06:01:23 | info | 	getRawSwapQuote: poolId=EUcZB2c4Ep1C7owsiDdJtzoHbqSvtBrADdZWaToHvxX4, baseToken=AticNUcrZZL8AJSPGmfW4duAqzmLVuNFr2mpg7RH5YBu, quoteToken=So11111111111111111111111111111111111111112, amount=504051.759062073, side=SELL, exactIn=true
+2025-06-16 06:01:23 | info | 	Pool type: amm
+2025-06-16 06:01:23 | error | 	Error pre-assembling swap: Token not found: AticNUcrZZL8AJSPGmfW4duAqzmLVuNFr2mpg7RH5YBu
+2025-06-16 06:01:23 | error | 	Failed to pre-assemble swap transaction {}
