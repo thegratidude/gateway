@@ -11,7 +11,7 @@ import {
   ClosePositionResponseType,
   ClosePositionResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { formatTokenAmount } from '../uniswap.utils';
 
@@ -313,15 +313,16 @@ export const closePositionRoute: FastifyPluginAsync = async (fastify) => {
         // In Ethereum there's no position rent to refund, but we include it for API compatibility
         const positionRentRefunded = 0;
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           positionRentRefunded,
           baseTokenAmountRemoved,
           quoteTokenAmountRemoved,
           baseFeeAmountCollected,
           quoteFeeAmountCollected,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

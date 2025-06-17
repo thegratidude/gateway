@@ -16,7 +16,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 async function quoteAmmSwapDirect(
@@ -91,7 +91,7 @@ async function quoteAmmSwapDirect(
       slippage: effectiveSlippage,
     });
 
-    return {
+    return addPSTTimestamp({
       poolInfo,
       mintIn,
       mintOut,
@@ -101,7 +101,8 @@ async function quoteAmmSwapDirect(
       maxAmountIn: new BN(amountIn),
       fee: out.fee,
       priceImpact: out.priceImpact,
-    };
+    
+    });
   } else if (amountOut) {
     const out = raydium.raydiumSDK.liquidity.computeAmountIn({
       poolInfo: {
@@ -117,7 +118,7 @@ async function quoteAmmSwapDirect(
       slippage: effectiveSlippage,
     });
 
-    return {
+    return addPSTTimestamp({
       poolInfo,
       mintIn,
       mintOut,
@@ -126,7 +127,8 @@ async function quoteAmmSwapDirect(
       minAmountOut: new BN(amountOut),
       maxAmountIn: out.maxAmountIn,
       priceImpact: out.priceImpact,
-    };
+    
+    });
   }
 
   throw new Error('Either amountIn or amountOut must be provided');
@@ -190,7 +192,7 @@ async function quoteCpmmSwapDirect(
       .mul(new BN(Math.floor((1 - effectiveSlippage) * 10000)))
       .div(new BN(10000));
 
-    return {
+    return addPSTTimestamp({
       poolInfo,
       amountIn: inputAmount,
       amountOut: swapResult.destinationAmountSwapped,
@@ -200,7 +202,8 @@ async function quoteCpmmSwapDirect(
       priceImpact: null,
       inputMint,
       outputMint,
-    };
+    
+    });
   } else if (amountOut) {
     const outputAmount = new BN(amountOut);
     const outputMintPk = new PublicKey(outputMint);
@@ -221,7 +224,7 @@ async function quoteCpmmSwapDirect(
       .mul(new BN(Math.floor((1 + effectiveSlippage) * 10000)))
       .div(new BN(10000));
 
-    return {
+    return addPSTTimestamp({
       poolInfo,
       amountIn: swapResult.amountIn,
       amountOut: outputAmount,
@@ -231,7 +234,8 @@ async function quoteCpmmSwapDirect(
       priceImpact: null,
       inputMint,
       outputMint,
-    };
+    
+    });
   }
 
   throw new Error('Either amountIn or amountOut must be provided');
@@ -442,8 +446,8 @@ async function formatSwapQuoteDirect(
   const quoteTokenBalanceChange =
     side === 'BUY' ? -estimatedAmountIn : estimatedAmountOut;
 
-  return {
-    poolAddress,
+  return addPSTTimestamp({
+      poolAddress,
     estimatedAmountIn,
     estimatedAmountOut,
     minAmountOut,
@@ -454,7 +458,8 @@ async function formatSwapQuoteDirect(
     gasPrice: 0,
     gasLimit: 0,
     gasCost: 0,
-  };
+  
+    });
 }
 
 export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
@@ -568,12 +573,13 @@ export const quoteSwapDirectRoute: FastifyPluginAsync = async (fastify) => {
           );
         }
 
-        return {
-          ...result,
+        return addPSTTimestamp({
+      ...result,
           gasPrice: gasEstimation?.gasPrice,
           gasLimit: gasEstimation?.gasLimit,
           gasCost: gasEstimation?.gasCost,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

@@ -12,7 +12,7 @@ import {
   OpenPositionResponse,
   OpenPositionResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 import { MeteoraConfig } from '../meteora.config';
 
@@ -226,14 +226,15 @@ async function openPosition(
     `Position opened at ${newImbalancePosition.publicKey.toBase58()}: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${tokenXSymbol}, ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${tokenYSymbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     fee: fee,
     positionAddress: newImbalancePosition.publicKey.toBase58(),
     positionRent: sentSOL,
     baseTokenAmountAdded: baseTokenBalanceChange,
     quoteTokenAmountAdded: quoteTokenBalanceChange,
-  };
+  
+    });
 }
 
 export const MeteoraOpenPositionRequest = Type.Intersect(

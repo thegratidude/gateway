@@ -6,7 +6,7 @@ import {
   StatusRequestSchema,
   StatusResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana } from '../solana';
 
 export async function getSolanaStatus(
@@ -20,13 +20,13 @@ export async function getSolanaStatus(
     const nativeCurrency = solana.config.network.nativeCurrencySymbol;
     const currentBlockNumber = await solana.getCurrentBlockNumber();
 
-    return {
+    return addPSTTimestamp({
       chain,
       network,
       rpcUrl,
       currentBlockNumber,
       nativeCurrency,
-    };
+    });
   } catch (error) {
     logger.error(`Error getting Solana status: ${error.message}`);
     throw fastify.httpErrors.internalServerError(

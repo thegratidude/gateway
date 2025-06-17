@@ -6,7 +6,7 @@ import {
   PollRequestSchema,
   PollResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana } from '../solana';
 
 export async function pollSolanaTransaction(
@@ -25,28 +25,30 @@ export async function pollSolanaTransaction(
       typeof signature !== 'string' ||
       !signature.match(/^[A-Za-z0-9]{43,88}$/)
     ) {
-      return {
-        currentBlock,
+      return addPSTTimestamp({
+      currentBlock,
         signature,
         txBlock: null,
         txStatus: 0,
         txData: null,
         fee: null,
         error: 'Invalid transaction signature format',
-      };
+      
+    });
     }
 
     const txData = await solana.getTransaction(signature);
 
     if (!txData) {
-      return {
-        currentBlock,
+      return addPSTTimestamp({
+      currentBlock,
         signature,
         txBlock: null,
         txStatus: 0,
         txData: null,
         fee: null,
-      };
+      
+    });
     }
 
     const txStatus = await solana.getTransactionStatusCode(txData as any);
@@ -57,17 +59,18 @@ export async function pollSolanaTransaction(
       `Polling for transaction ${signature}, Status: ${txStatus}, Balance Change: ${balanceChange} SOL, Fee: ${fee} SOL`,
     );
 
-    return {
+    return addPSTTimestamp({
       currentBlock,
       signature,
       txBlock: txData.slot,
       txStatus,
       fee,
       txData,
-    };
+    
+    });
   } catch (error) {
     logger.error(`Error polling transaction ${signature}: ${error.message}`);
-    return {
+    return addPSTTimestamp({
       currentBlock: await solana.getCurrentBlockNumber(),
       signature,
       txBlock: null,
@@ -75,7 +78,8 @@ export async function pollSolanaTransaction(
       txData: null,
       fee: null,
       error: 'Transaction not found or invalid',
-    };
+    
+    });
   }
 }
 

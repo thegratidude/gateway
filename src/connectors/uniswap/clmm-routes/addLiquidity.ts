@@ -17,7 +17,7 @@ import {
   AddLiquidityResponseType,
   AddLiquidityResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import {
   getUniswapV3NftManagerAddress,
@@ -304,12 +304,13 @@ export const addLiquidityRoute: FastifyPluginAsync = async (fastify) => {
           ? actualToken1Amount
           : actualToken0Amount;
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           baseTokenAmountAdded: actualBaseAmount,
           quoteTokenAmountAdded: actualQuoteAmount,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

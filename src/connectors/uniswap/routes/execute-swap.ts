@@ -8,7 +8,7 @@ import {
   ExecuteSwapResponseType,
   ExecuteSwapResponse,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { formatTokenAmount } from '../uniswap.utils';
 
 import { getUniswapQuote } from './quote-swap';
@@ -283,14 +283,15 @@ export const executeSwapRoute: FastifyPluginAsync = async (
           ),
         );
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           totalInputSwapped,
           totalOutputSwapped,
           fee: gasFee,
           baseTokenBalanceChange,
           quoteTokenBalanceChange,
-        };
+        
+    });
       } catch (e) {
         logger.error(`Execute swap error: ${e.message}`);
         if (e.stack) {

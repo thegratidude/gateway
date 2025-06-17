@@ -102,6 +102,14 @@ export class Solana {
   private constructor(network: string) {
     this.network = network;
     this.config = getSolanaConfig('solana', network);
+    
+    // Override nodeURL with environment variable if available
+    if (process.env.HELIUS_RPC_URL) {
+      this.config.network.nodeURL = process.env.HELIUS_RPC_URL;
+    } else if (process.env.HTTP_URL) {
+      this.config.network.nodeURL = process.env.HTTP_URL;
+    }
+    
     this.nativeTokenSymbol = this.config.network.nativeCurrencySymbol;
     this.connection = new Connection(this.config.network.nodeURL, {
       commitment: 'confirmed',

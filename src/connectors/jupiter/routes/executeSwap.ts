@@ -9,7 +9,7 @@ import {
   ExecuteSwapRequestType,
   ExecuteSwapResponseType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Jupiter } from '../jupiter';
 
 async function executeJupiterSwap(
@@ -62,7 +62,7 @@ async function executeJupiterSwap(
         wallet.publicKey.toBase58(),
       );
 
-    return {
+    return addPSTTimestamp({
       signature,
       totalInputSwapped: Math.abs(
         side === 'SELL' ? baseTokenBalanceChange : quoteTokenBalanceChange,
@@ -73,7 +73,8 @@ async function executeJupiterSwap(
       fee: feeInLamports / 1e9,
       baseTokenBalanceChange: baseTokenBalanceChange,
       quoteTokenBalanceChange: quoteTokenBalanceChange,
-    };
+    
+    });
   } catch (error: any) {
     logger.error(`Jupiter swap error: ${error.message || error}`);
 

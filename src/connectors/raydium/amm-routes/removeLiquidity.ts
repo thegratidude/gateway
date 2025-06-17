@@ -17,7 +17,7 @@ import {
   RemoveLiquidityRequestType,
   RemoveLiquidityResponseType,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 // Interfaces for SDK responses
@@ -238,12 +238,13 @@ async function removeLiquidity(
         `Liquidity removed from pool ${poolAddressToUse}: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${poolInfo.mintA.symbol}, ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${poolInfo.mintB.symbol}`,
       );
 
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: txData.meta.fee / 1e9,
         baseTokenAmountRemoved: Math.abs(baseTokenBalanceChange),
         quoteTokenAmountRemoved: Math.abs(quoteTokenBalanceChange),
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

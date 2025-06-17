@@ -7,7 +7,7 @@ import {
   CollectFeesRequestType,
   CollectFeesResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 
 export async function collectFees(
@@ -80,12 +80,13 @@ export async function collectFees(
     `Fees collected from position ${positionAddress}: ${Math.abs(collectedFeeX).toFixed(4)} ${tokenXSymbol}, ${Math.abs(collectedFeeY).toFixed(4)} ${tokenYSymbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     fee,
     baseFeeAmountCollected: Math.abs(collectedFeeX),
     quoteFeeAmountCollected: Math.abs(collectedFeeY),
-  };
+  
+    });
 }
 
 export const collectFeesRoute: FastifyPluginAsync = async (fastify) => {

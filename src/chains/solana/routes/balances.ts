@@ -13,7 +13,7 @@ import {
   BalanceRequestSchema,
   BalanceResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana } from '../solana';
 
 // Define the LAMPORT_TO_SOL constant for easier access
@@ -31,7 +31,7 @@ export async function getSolanaBalances(
 
     // Call our new optimized getBalance function
     const balances = await getOptimizedBalance(solana, wallet, tokens);
-    return { balances };
+    return addPSTTimestamp({ balances });
   } catch (error) {
     logger.error(`Error getting balances: ${error.message}`);
     throw fastify.httpErrors.internalServerError(

@@ -12,7 +12,7 @@ import {
   ExecuteSwapRequest,
   ExecuteSwapRequestType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 
 import { getRawSwapQuote } from './quoteSwap';
@@ -105,14 +105,15 @@ async function executeSwap(
       `Swap executed successfully: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${inputToken.symbol} -> ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${outputToken.symbol}`,
     );
 
-    return {
+    return addPSTTimestamp({
       signature,
       totalInputSwapped: Math.abs(baseTokenBalanceChange),
       totalOutputSwapped: Math.abs(quoteTokenBalanceChange),
       fee,
       baseTokenBalanceChange,
       quoteTokenBalanceChange,
-    };
+    
+    });
   }
 
   // For BUY orders, use the existing quote logic
@@ -164,14 +165,15 @@ async function executeSwap(
     `Swap executed successfully: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${inputToken.symbol} -> ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${outputToken.symbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     totalInputSwapped: Math.abs(baseTokenBalanceChange),
     totalOutputSwapped: Math.abs(quoteTokenBalanceChange),
     fee,
     baseTokenBalanceChange,
     quoteTokenBalanceChange,
-  };
+  
+    });
 }
 
 export const executeSwapRoute: FastifyPluginAsync = async (fastify) => {

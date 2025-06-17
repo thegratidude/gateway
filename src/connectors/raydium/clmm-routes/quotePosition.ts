@@ -10,7 +10,7 @@ import {
   QuotePositionRequest,
   QuotePositionResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 export async function quotePosition(
@@ -185,7 +185,7 @@ export async function quotePosition(
       res = resBase || resQuote;
     }
 
-    return {
+    return addPSTTimestamp({
       baseLimited,
       baseTokenAmount:
         Number(res.amountA.amount.toString()) / 10 ** poolInfo.mintA.decimals,
@@ -198,7 +198,8 @@ export async function quotePosition(
         Number(res.amountSlippageB.amount.toString()) /
         10 ** poolInfo.mintB.decimals,
       liquidity: res.liquidity,
-    };
+    
+    });
   } catch (error) {
     logger.error(error);
     throw error;

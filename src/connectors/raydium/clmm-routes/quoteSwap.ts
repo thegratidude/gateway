@@ -17,7 +17,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 /**
@@ -242,7 +242,7 @@ async function formatSwapQuote(
 
     const price = estimatedAmountIn / estimatedAmountOut;
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn,
       estimatedAmountOut,
@@ -254,7 +254,8 @@ async function formatSwapQuote(
       gasPrice: 0,
       gasLimit: 0,
       gasCost: 0,
-    };
+    
+    });
   } else {
     const exactInResponse = response as ReturnTypeComputeAmountOutFormat;
     const estimatedAmountIn =
@@ -269,7 +270,7 @@ async function formatSwapQuote(
 
     const price = estimatedAmountOut / estimatedAmountIn;
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn,
       estimatedAmountOut,
@@ -281,7 +282,8 @@ async function formatSwapQuote(
       gasPrice: 0,
       gasLimit: 0,
       gasCost: 0,
-    };
+    
+    });
   }
 }
 
@@ -367,13 +369,14 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
           );
         }
 
-        return {
-          poolAddress,
+        return addPSTTimestamp({
+      poolAddress,
           ...result,
           gasPrice: gasEstimation?.gasPrice,
           gasLimit: gasEstimation?.gasLimit,
           gasCost: gasEstimation?.gasCost,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         // Preserve the original error if it's a FastifyError

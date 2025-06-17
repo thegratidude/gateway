@@ -6,7 +6,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteResponseType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Jupiter } from '../jupiter';
 
 export async function getJupiterQuote(
@@ -101,7 +101,7 @@ export async function getJupiterQuote(
         ? Number(quote.outAmount) / 10 ** baseTokenInfo.decimals // Getting base
         : Number(quote.outAmount) / 10 ** quoteTokenInfo.decimals; // Getting quote
 
-    return {
+    return addPSTTimestamp({
       estimatedAmountIn:
         tradeSide === 'BUY' ? estimatedAmountOut : estimatedAmountIn, // Always in base token
       estimatedAmountOut:
@@ -115,7 +115,8 @@ export async function getJupiterQuote(
         tradeSide === 'BUY'
           ? estimatedAmountIn / estimatedAmountOut
           : estimatedAmountOut / estimatedAmountIn,
-    };
+    
+    });
   } catch (error: any) {
     logger.error(`Jupiter quote error: ${error.message || error}`);
     logger.error(`Jupiter quote error details:`, {
@@ -235,8 +236,8 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
         logger.warn(`Failed to estimate gas for swap quote: ${error.message}`);
       }
 
-      return {
-        estimatedAmountIn: quote.estimatedAmountIn,
+      return addPSTTimestamp({
+      estimatedAmountIn: quote.estimatedAmountIn,
         estimatedAmountOut: quote.estimatedAmountOut,
         minAmountOut: quote.minAmountOut,
         maxAmountIn: quote.maxAmountIn,
@@ -251,7 +252,8 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
         gasLimit: gasEstimation?.gasLimit,
         gasCost: gasEstimation?.gasCost,
         poolAddress: 'jupiter-aggregator', // Jupiter doesn't expose specific pool addresses
-      };
+      
+    });
     },
   );
 };

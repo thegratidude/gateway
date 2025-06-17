@@ -1,0 +1,248 @@
+
+> gateway@dev-2.7.0 start /Users/jonathangould/Documents/projects/hum/gateway
+> START_SERVER=true node dist/index.js --passphrase\=a --dev
+
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+
+╔██████╗  █████╗ ████████╗███████╗██╗    ██╗ █████╗ ██╗   ██╗
+██╔════╝ ██╔══██╗╚══██╔══╝██╔════╝██║    ██║██╔══██╗╚██╗ ██╔╝
+██║  ███╗███████║   ██║   █████╗  ██║ █╗ ██║███████║ ╚████╔╝ 
+██║   ██║██╔══██║   ██║   ██╔══╝  ██║███╗██║██╔══██║  ╚██╔╝  
+╚██████╔╝██║  ██║   ██║   ███████╗╚███╔███╔╝██║  ██║   ██║   
+ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝ ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝
+2025-06-16 12:47:30 | info | 	⚡️ Gateway version dev-2.7.0 starting at http://localhost:15888
+2025-06-16 12:47:30 | info | 	Checking for processes using port 15888...
+(node:8215) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-06-16 12:47:30 | info | 	No process found using port 15888
+2025-06-16 12:47:30 | info | 	🔴 Running in development mode with (unsafe!) HTTP endpoints
+2025-06-16 12:47:30 | info | 	Initializing Solana connector for network: mainnet-beta, nodeURL: https://mainnet.helius-rpc.com/?api-key=47098f60-a0bc-48ca-9d4d-6cd722281a89
+2025-06-16 12:47:30 | info | 	Read token file from conf/lists/solana.json, content length: 13433
+2025-06-16 12:47:30 | info | 	Parsed token count: 83
+2025-06-16 12:47:30 | info | 	Loaded 83 tokens for mainnet-beta
+2025-06-16 12:47:30 | info | 	Initializing Ethereum connector for network: mainnet, nodeURL: https://eth.llamarpc.com
+2025-06-16 12:47:30 | info | 	Loading tokens for ethereum (1) from FILE source: conf/lists/mainnet.json
+2025-06-16 12:47:30 | info | 	Read token file from conf/lists/mainnet.json, content length: 22236
+2025-06-16 12:47:30 | info | 	Parsed token count: 142
+2025-06-16 12:47:30 | info | 	Loaded 142 tokens for ethereum
+2025-06-16 12:47:30 | info | 	Initializing Ethereum connector for network: base, nodeURL: https://mainnet.base.org
+2025-06-16 12:47:30 | info | 	Loading tokens for ethereum (8453) from FILE source: conf/lists/base.json
+2025-06-16 12:47:30 | info | 	Read token file from conf/lists/base.json, content length: 34408
+2025-06-16 12:47:30 | info | 	Parsed token count: 216
+2025-06-16 12:47:30 | info | 	Loaded 216 tokens for ethereum
+2025-06-16 12:47:30 | info | 	📓 Documentation available at http://localhost:15888/docs
+2025-06-16 12:47:48 | info | 	Raydium initialized with wallet: FzsbG1gw9n74FVJbP1VktV4e9wJ9DYmkAVXGJegLqPqr
+2025-06-16 12:47:48 | info | 	formatSwapQuote: poolAddress=J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE, baseToken=SOL, quoteToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, amount=0.01, side=BUY
+2025-06-16 12:47:49 | info | 	Resolved base token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:49 | info | 	Resolved quote token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+poolInfo {
+  type: 'Standard',
+  programId: '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+  id: 'J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE',
+  mintA: {
+    chainId: 101,
+    address: '57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj',
+    programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    logoURI: 'https://img-v1.raydium.io/icon/57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj.png',
+    symbol: 'Pnut',
+    name: 'Peanut the Squirrel',
+    decimals: 6,
+    tags: [],
+    extensions: {}
+  },
+  mintB: {
+    chainId: 101,
+    address: 'So11111111111111111111111111111111111111112',
+    programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    logoURI: 'https://img-v1.raydium.io/icon/So11111111111111111111111111111111111111112.png',
+    symbol: 'WSOL',
+    name: 'Wrapped SOL',
+    decimals: 9,
+    tags: [],
+    extensions: {}
+  },
+  price: 9.41529950002374e-11,
+  mintAmountA: 745960157.718009,
+  mintAmountB: 0.070234383,
+  feeRate: 0.0025,
+  openTime: '1750083930',
+  tvl: 22.1,
+  day: {
+    volume: 312098.0919830449,
+    volumeQuote: 2168.652512171996,
+    volumeFee: 780.2452299576145,
+    apr: 1288861.25,
+    feeApr: 1288861.25,
+    priceMin: 8.814603026151428e-11,
+    priceMax: 0.0014222749207916776,
+    rewardApr: []
+  },
+  week: {
+    volume: 312098.0919830449,
+    volumeQuote: 2168.652512171996,
+    volumeFee: 780.2452299576145,
+    apr: 105933.8,
+    feeApr: 105933.8,
+    priceMin: 8.814603026151428e-11,
+    priceMax: 0.0014222749207916776,
+    rewardApr: []
+  },
+  month: {
+    volume: 312098.0919830449,
+    volumeQuote: 2168.652512171996,
+    volumeFee: 780.2452299576145,
+    apr: 42373.52,
+    feeApr: 42373.52,
+    priceMin: 8.814603026151428e-11,
+    priceMax: 0.0014222749207916776,
+    rewardApr: []
+  },
+  pooltype: [ 'OpenBookMarket' ],
+  rewardDefaultInfos: [],
+  farmUpcomingCount: 0,
+  farmOngoingCount: 0,
+  farmFinishedCount: 0,
+  marketId: 'EFbanrKbxnUtdddUEaM3Hsf1J37sBMFT387DAY5FZTMg',
+  lpMint: {
+    chainId: 101,
+    address: '9464Xsiyoa7SMN5odZmd2dkpaGzaSiwqCbEs8GAKqY7z',
+    programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    logoURI: '',
+    symbol: '',
+    name: '',
+    decimals: 6,
+    tags: [],
+    extensions: {}
+  },
+  lpPrice: 0.00009881726211465068,
+  lpAmount: 223606.797749,
+  burnPercent: 100,
+  launchMigratePool: false
+}
+ammPoolInfo {
+  J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE: {
+    status: <BN: 6>,
+    nonce: <BN: fe>,
+    maxOrder: <BN: 7>,
+    depth: <BN: 3>,
+    baseDecimal: <BN: 6>,
+    quoteDecimal: <BN: 9>,
+    state: <BN: 1>,
+    resetFlag: <BN: 0>,
+    minSize: <BN: 3b9aca00>,
+    volMaxCutRatio: <BN: 1f4>,
+    amountWaveRatio: <BN: 4c4b40>,
+    baseLotSize: <BN: f4240>,
+    quoteLotSize: <BN: 186a0>,
+    minPriceMultiplier: <BN: 1>,
+    maxPriceMultiplier: <BN: 3b9aca00>,
+    systemDecimalValue: <BN: 3b9aca00>,
+    minSeparateNumerator: <BN: 5>,
+    minSeparateDenominator: <BN: 2710>,
+    tradeFeeNumerator: <BN: 19>,
+    tradeFeeDenominator: <BN: 2710>,
+    pnlNumerator: <BN: c>,
+    pnlDenominator: <BN: 64>,
+    swapFeeNumerator: <BN: 19>,
+    swapFeeDenominator: <BN: 2710>,
+    baseNeedTakePnl: <BN: 0>,
+    quoteNeedTakePnl: <BN: 0>,
+    quoteTotalPnl: <BN: 9aea06f5>,
+    baseTotalPnl: <BN: 56129502ed3>,
+    poolOpenTime: <BN: 6850295a>,
+    punishPcAmount: <BN: 0>,
+    punishCoinAmount: <BN: 0>,
+    orderbookToInitTime: <BN: 0>,
+    swapBaseInAmount: <BN: 47a59d9705dbb>,
+    swapQuoteOutAmount: <BN: fc894baf05>,
+    swapBase2QuoteFee: <BN: a1886a5c>,
+    swapQuoteInAmount: <BN: fc64778ca7>,
+    swapBaseOutAmount: <BN: 200bbbd100f99>,
+    swapQuote2BaseFee: <BN: 2ddaa24d65f>,
+    baseVault: PublicKey [PublicKey(6q7wDLxpi6z9j3NAMYhhdpBPmMzDfe3tGbQrwTPeRYHp)] {
+      _bn: <BN: 569e2791628f428bda0e69e290cf92fa8abeac47dd5c6b72d599e3a74fb31e7b>
+    },
+    quoteVault: PublicKey [PublicKey(HaiGh3DC4xwAuBnBFsT7HJxUUZf6xRQRiudWbQ1zvscb)] {
+      _bn: <BN: f65dd27ef6bf8544aa2233a235401d52a63c7d605c7c0e8ff5ac4de027327db0>
+    },
+    baseMint: PublicKey [PublicKey(57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj)] {
+      _bn: <BN: 3d2d2170962c17085ec1ed362329eacbcef089eeb56b81d10c9de4140aaee064>
+    },
+    quoteMint: PublicKey [PublicKey(So11111111111111111111111111111111111111112)] {
+      _bn: <BN: 69b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001>
+    },
+    lpMint: PublicKey [PublicKey(9464Xsiyoa7SMN5odZmd2dkpaGzaSiwqCbEs8GAKqY7z)] {
+      _bn: <BN: 77a7f5d0dd086b74b71aef821bc1b266cea03e76e92a79693d4123dcdabf1971>
+    },
+    openOrders: PublicKey [PublicKey(EmHjMPaVfafdVUKGitfRyyCLPcbXVMwavbfXRhyouuth)] {
+      _bn: <BN: cc80670cbd609dd1232f315b6a153ac7d59071db549898bf027f3ef5579c2b06>
+    },
+    marketId: PublicKey [PublicKey(EFbanrKbxnUtdddUEaM3Hsf1J37sBMFT387DAY5FZTMg)] {
+      _bn: <BN: c4e529fe2df093ba6d64a2e67c70b94ca8d11b1998bc47aac2fd157f6d6020f7>
+    },
+    marketProgramId: PublicKey [PublicKey(srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX)] {
+      _bn: <BN: d0751a8282da61305fe299c37b998e58471db1135037310f8be1045a60af6ee>
+    },
+    targetOrders: PublicKey [PublicKey(8hS8osPaZwtjJSwK4ksuYjgF2vBk4khFJReECEo64ZEX)] {
+      _bn: <BN: 725d75ed815963de50187eeb2b39812b1ba0b94adcb3d8e819441abd948cd5d8>
+    },
+    withdrawQueue: PublicKey [PublicKey(11111111111111111111111111111111)] {
+      _bn: <BN: 0>
+    },
+    lpVault: PublicKey [PublicKey(11111111111111111111111111111111)] {
+      _bn: <BN: 0>
+    },
+    owner: PublicKey [PublicKey(GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ)] {
+      _bn: <BN: e5b62b65cb3bbda6f56888e66fee8e64dc5560199c0f88b11fe273bd059e8aa1>
+    },
+    lpReserve: <BN: 341000f5b5>,
+    padding: [ <BN: 0>, <BN: 323>, <BN: 0> ],
+    programId: PublicKey [PublicKey(675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8)] {
+      _bn: <BN: 4bd949c43602c33f207790ed16a3524ca1b9975cf121a2a90cffec7df8b68acd>
+    },
+    baseReserve: <BN: 2a6726237a5f9>,
+    mintAAmount: <BN: 2a6726237a5f9>,
+    mintBAmount: <BN: 42fb10f>,
+    quoteReserve: <BN: 42fb10f>,
+    poolPrice: 9.4152995000237395002e-11
+  }
+}
+2025-06-16 12:47:49 | info | 	Pool info: type=amm, baseToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, quoteToken=So11111111111111111111111111111111111111112
+2025-06-16 12:47:49 | info | 	getRawSwapQuote: poolId=J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE, baseToken=SOL, quoteToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, amount=0.01, side=BUY, exactIn=true
+2025-06-16 12:47:49 | info | 	Pool type: amm
+2025-06-16 12:47:50 | info | 	Base token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:50 | info | 	Quote token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+2025-06-16 12:47:50 | info | 	Input token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+2025-06-16 12:47:50 | info | 	Output token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:50 | info | 	Amount in human readable: 0.01
+2025-06-16 12:47:50 | info | 	Amount in with decimals: 10000
+2025-06-16 12:47:50 | info | 	Raw quote result: amountIn=10000, amountOut=0, inputMint=undefined, outputMint=undefined
+2025-06-16 12:47:50 | info | 	Quote result: amountIn=10000, amountOut=0
+2025-06-16 12:47:50 | info | 	Using input token decimals: 6, output token decimals: 9
+2025-06-16 12:47:50 | info | 	Converted amounts: estimatedAmountIn=0.01, estimatedAmountOut=0, minAmountOut=0, maxAmountIn=0.01
+2025-06-16 12:47:50 | info | 	Balance changes: baseTokenBalanceChange=0, quoteTokenBalanceChange=-0.01
+minimumFeeLamports 0.5
+2025-06-16 12:47:51 | info | 	Recent priority fees paid: 0.0020 - 0.0100 lamports/CU (avg: 0.0073)
+2025-06-16 12:47:51 | info | 	Base priority fee: 0.5000 lamports/CU (minimum)
+2025-06-16 12:47:51 | info | 	formatSwapQuote: poolAddress=J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE, baseToken=SOL, quoteToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, amount=0, side=SELL
+2025-06-16 12:47:51 | info | 	Resolved base token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:51 | info | 	Resolved quote token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+2025-06-16 12:47:51 | info | 	Pool info: type=amm, baseToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, quoteToken=So11111111111111111111111111111111111111112
+2025-06-16 12:47:51 | info | 	getRawSwapQuote: poolId=J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE, baseToken=SOL, quoteToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, amount=0, side=SELL, exactIn=true
+2025-06-16 12:47:51 | info | 	Pool type: amm
+2025-06-16 12:47:51 | info | 	Base token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:51 | info | 	Quote token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+2025-06-16 12:47:51 | info | 	Input token: SOL, address=So11111111111111111111111111111111111111112, decimals=9
+2025-06-16 12:47:51 | info | 	Output token: DUMMY_57on, address=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj, decimals=6
+2025-06-16 12:47:51 | info | 	Amount in human readable: 0
+2025-06-16 12:47:51 | info | 	Amount in with decimals: 0
+2025-06-16 12:47:51 | info | 	Raw quote result: amountIn=0, amountOut=0, inputMint=undefined, outputMint=undefined
+2025-06-16 12:47:51 | info | 	Quote result: amountIn=0, amountOut=0
+2025-06-16 12:47:51 | info | 	Using input token decimals: 9, output token decimals: 6
+2025-06-16 12:47:51 | info | 	Converted amounts: estimatedAmountIn=0, estimatedAmountOut=0, minAmountOut=0, maxAmountIn=0
+2025-06-16 12:47:51 | info | 	Balance changes: baseTokenBalanceChange=0, quoteTokenBalanceChange=0
+2025-06-16 12:47:51 | error | 	Unhandled error: {
+  "error": "The value \"NaN\" cannot be converted to a number.",
+  "url": "/connectors/raydium/amm/quote-swap?network=mainnet-beta&baseToken=SOL&quoteToken=57onS5QD8QC7qfABLKnESkcdT6GmhqqRJhghAzhAjnYj&amount=0&side=SELL&slippagePct=1&poolAddress=J6fUU982c4DPYhuZmSzzFRR78eoXVN88fhdVXxEF9CNE",
+  "params": {}
+}

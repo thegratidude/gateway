@@ -10,7 +10,7 @@ import {
   ExecuteSwapRequest,
   ExecuteSwapRequestType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { getRawSwapQuote } from './quoteSwap';
@@ -146,14 +146,15 @@ async function executeSwap(
           `Optimized SELL executed successfully: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${inputToken.symbol} -> ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${outputToken.symbol}`,
         );
 
-        return {
-          signature,
+        return addPSTTimestamp({
+      signature,
           totalInputSwapped: Math.abs(baseTokenBalanceChange),
           totalOutputSwapped: Math.abs(quoteTokenBalanceChange),
           fee: txData.meta.fee / 1e9,
           baseTokenBalanceChange,
           quoteTokenBalanceChange,
-        };
+        
+    });
       }
       currentPriorityFee =
         currentPriorityFee * solana.config.priorityFeeMultiplier;
@@ -273,14 +274,15 @@ async function executeSwap(
         `Swap executed successfully: ${Math.abs(baseTokenBalanceChange).toFixed(4)} ${inputToken.symbol} -> ${Math.abs(quoteTokenBalanceChange).toFixed(4)} ${outputToken.symbol}`,
       );
 
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         totalInputSwapped: Math.abs(baseTokenBalanceChange),
         totalOutputSwapped: Math.abs(quoteTokenBalanceChange),
         fee: txData.meta.fee / 1e9,
         baseTokenBalanceChange,
         quoteTokenBalanceChange,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

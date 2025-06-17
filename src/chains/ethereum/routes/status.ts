@@ -6,7 +6,7 @@ import {
   StatusRequestSchema,
   StatusResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 export async function getEthereumStatus(
@@ -34,13 +34,13 @@ export async function getEthereumStatus(
       // Continue with default block number
     }
 
-    return {
+    return addPSTTimestamp({
       chain,
       network,
       rpcUrl,
       currentBlockNumber,
       nativeCurrency,
-    };
+    });
   } catch (error) {
     logger.error(`Error getting Ethereum status: ${error.message}`);
     throw new Error(`Failed to get Ethereum status: ${error.message}`);
@@ -95,13 +95,13 @@ export const statusRoute: FastifyPluginAsync = async (fastify) => {
         logger.error(`Error in Ethereum status endpoint: ${error.message}`);
         reply.status(500);
         // Return a minimal valid response
-        return {
+        return addPSTTimestamp({
           chain: 'ethereum',
           network,
           rpcUrl: 'unavailable',
           currentBlockNumber: 0,
           nativeCurrency: 'ETH',
-        };
+        });
       }
     },
   );

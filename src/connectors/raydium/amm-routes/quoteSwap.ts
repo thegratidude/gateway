@@ -16,7 +16,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 async function quoteAmmSwap(
@@ -487,7 +487,7 @@ async function formatSwapQuote(
       ? estimatedAmountOut / estimatedAmountIn
       : estimatedAmountIn / estimatedAmountOut;
 
-  return {
+  return addPSTTimestamp({
     poolAddress,
     estimatedAmountIn,
     estimatedAmountOut,
@@ -499,7 +499,7 @@ async function formatSwapQuote(
     gasPrice: 0,
     gasLimit: 0,
     gasCost: 0,
-  };
+  });
 }
 
 export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
@@ -584,12 +584,12 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
           );
         }
 
-        return {
+        return addPSTTimestamp({
           ...result,
           gasPrice: gasEstimation?.gasPrice,
           gasLimit: gasEstimation?.gasLimit,
           gasCost: gasEstimation?.gasCost,
-        };
+        });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

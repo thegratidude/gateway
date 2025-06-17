@@ -7,7 +7,7 @@ import {
   TokensRequestSchema,
   TokensResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana } from '../solana';
 
 export async function getSolanaTokens(
@@ -34,7 +34,7 @@ export async function getSolanaTokens(
       }
     }
 
-    return { tokens };
+    return addPSTTimestamp({ tokens });
   } catch (error) {
     logger.error(`Error getting tokens: ${error.message}`);
     throw fastify.httpErrors.internalServerError(

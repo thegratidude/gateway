@@ -8,7 +8,7 @@ import {
   GetSwapQuoteRequest,
   GetSwapQuoteRequestType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { getRawSwapQuote } from './quoteSwap';
@@ -84,7 +84,7 @@ async function quoteSwapOptimized(
     minOutputAmount = Number(quote.minAmountOut) / 10 ** outputToken.decimals;
   }
 
-  const response: GetSwapQuoteResponseType = {
+  const response: GetSwapQuoteResponseType = addPSTTimestamp({
     poolAddress,
     estimatedAmountIn: inputAmount,
     estimatedAmountOut: outputAmount,
@@ -97,7 +97,7 @@ async function quoteSwapOptimized(
     gasPrice: 0,
     gasLimit: 0,
     gasCost: 0,
-  };
+  });
 
   // Cache the quote
   raydium.setCachedQuote(

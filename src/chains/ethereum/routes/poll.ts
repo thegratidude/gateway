@@ -8,7 +8,7 @@ import {
   PollResponseSchema,
 } from '../../../schemas/chain-schema';
 import { getConnector } from '../../../services/connection-manager';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 // Helper function for transaction response formatting
@@ -21,12 +21,13 @@ const toEthereumTransactionResponse = (
     if (response.gasPrice) {
       gasPrice = response.gasPrice.toString();
     }
-    return {
+    return addPSTTimestamp({
       ...response,
       gasPrice,
       gasLimit: response.gasLimit.toString(),
       value: response.value.toString(),
-    };
+    
+    });
   }
 
   return null;
@@ -120,14 +121,15 @@ export async function pollEthereumTransaction(
 
     logger.info(`Poll ethereum, signature ${signature}, status ${txStatus}.`);
 
-    return {
+    return addPSTTimestamp({
       currentBlock,
       signature,
       txBlock,
       txStatus,
       txData: toEthereumTransactionResponse(txData),
       fee: null, // Optional field
-    };
+    
+    });
   } catch (error) {
     if (error.statusCode) {
       throw error; // Re-throw if it's already a Fastify error

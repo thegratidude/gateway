@@ -10,7 +10,7 @@ import {
   OpenPositionRequestType,
   OpenPositionResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { quotePosition } from './quotePosition';
@@ -144,14 +144,15 @@ async function openPosition(
           wallet.publicKey.toBase58(),
         );
 
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: totalFee / 1e9,
         positionAddress: extInfo.nftMint.toBase58(),
         positionRent,
         baseTokenAmountAdded: baseTokenBalanceChange,
         quoteTokenAmountAdded: quoteTokenBalanceChange,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

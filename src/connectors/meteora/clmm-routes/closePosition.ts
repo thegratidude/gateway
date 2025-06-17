@@ -9,7 +9,7 @@ import {
   CollectFeesResponseType,
   RemoveLiquidityResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 
 import { collectFees } from './collectFees';
@@ -83,15 +83,16 @@ async function closePosition(
       );
       const returnedSOL = Math.abs(balanceChange);
 
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: fee + removeLiquidityResult.fee + collectFeesResult.fee,
         positionRentRefunded: returnedSOL,
         baseTokenAmountRemoved: removeLiquidityResult.baseTokenAmountRemoved,
         quoteTokenAmountRemoved: removeLiquidityResult.quoteTokenAmountRemoved,
         baseFeeAmountCollected: collectFeesResult.baseFeeAmountCollected,
         quoteFeeAmountCollected: collectFeesResult.quoteFeeAmountCollected,
-      };
+      
+    });
     } catch (positionError) {
       logger.error('Error in position closing workflow:', {
         message: positionError.message,

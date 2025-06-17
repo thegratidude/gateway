@@ -20,7 +20,7 @@ import {
   OpenPositionResponseType,
   OpenPositionResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { formatTokenAmount, parseFeeTier } from '../uniswap.utils';
 
@@ -461,14 +461,15 @@ export const openPositionRoute: FastifyPluginAsync = async (fastify) => {
           ? actualToken1Amount
           : actualToken0Amount;
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           positionAddress: positionId,
           positionRent,
           baseTokenAmountAdded: baseAmountUsed,
           quoteTokenAmountAdded: quoteAmountUsed,
-        };
+        
+    });
       } catch (e: any) {
         logger.error('Failed to open position:', e);
 

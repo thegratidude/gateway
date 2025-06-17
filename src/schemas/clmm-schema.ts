@@ -1,5 +1,8 @@
 import { Type, Static } from '@sinclair/typebox';
 
+// Import the base response schema
+import { BaseResponseSchema } from './chain-schema';
+
 export const FetchPoolsRequest = Type.Object(
   {
     network: Type.Optional(Type.String()), // Network (defaults to mainnet)
@@ -113,17 +116,20 @@ export const OpenPositionRequest = Type.Object(
 );
 export type OpenPositionRequestType = Static<typeof OpenPositionRequest>;
 
-export const OpenPositionResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    positionAddress: Type.String(),
-    positionRent: Type.Number(),
-    baseTokenAmountAdded: Type.Number(),
-    quoteTokenAmountAdded: Type.Number(),
-  },
-  { $id: 'OpenPositionResponse' },
-);
+export const OpenPositionResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      positionAddress: Type.String(),
+      positionRent: Type.Number(),
+      baseTokenAmountAdded: Type.Number(),
+      quoteTokenAmountAdded: Type.Number(),
+    },
+    { $id: 'OpenPositionResponse' },
+  ),
+]);
 export type OpenPositionResponseType = Static<typeof OpenPositionResponse>;
 
 export const AddLiquidityRequest = Type.Object(
@@ -139,15 +145,18 @@ export const AddLiquidityRequest = Type.Object(
 );
 export type AddLiquidityRequestType = Static<typeof AddLiquidityRequest>;
 
-export const AddLiquidityResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    baseTokenAmountAdded: Type.Number(),
-    quoteTokenAmountAdded: Type.Number(),
-  },
-  { $id: 'AddLiquidityResponse' },
-);
+export const AddLiquidityResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      baseTokenAmountAdded: Type.Number(),
+      quoteTokenAmountAdded: Type.Number(),
+    },
+    { $id: 'AddLiquidityResponse' },
+  ),
+]);
 export type AddLiquidityResponseType = Static<typeof AddLiquidityResponse>;
 
 export const RemoveLiquidityRequest = Type.Object(
@@ -161,15 +170,18 @@ export const RemoveLiquidityRequest = Type.Object(
 );
 export type RemoveLiquidityRequestType = Static<typeof RemoveLiquidityRequest>;
 
-export const RemoveLiquidityResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    baseTokenAmountRemoved: Type.Number(),
-    quoteTokenAmountRemoved: Type.Number(),
-  },
-  { $id: 'RemoveLiquidityResponse' },
-);
+export const RemoveLiquidityResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      baseTokenAmountRemoved: Type.Number(),
+      quoteTokenAmountRemoved: Type.Number(),
+    },
+    { $id: 'RemoveLiquidityResponse' },
+  ),
+]);
 export type RemoveLiquidityResponseType = Static<
   typeof RemoveLiquidityResponse
 >;
@@ -184,15 +196,18 @@ export const CollectFeesRequest = Type.Object(
 );
 export type CollectFeesRequestType = Static<typeof CollectFeesRequest>;
 
-export const CollectFeesResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    baseFeeAmountCollected: Type.Number(),
-    quoteFeeAmountCollected: Type.Number(),
-  },
-  { $id: 'CollectFeesResponse' },
-);
+export const CollectFeesResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      baseFeeAmountCollected: Type.Number(),
+      quoteFeeAmountCollected: Type.Number(),
+    },
+    { $id: 'CollectFeesResponse' },
+  ),
+]);
 export type CollectFeesResponseType = Static<typeof CollectFeesResponse>;
 
 export const ClosePositionRequest = Type.Object(
@@ -205,18 +220,21 @@ export const ClosePositionRequest = Type.Object(
 );
 export type ClosePositionRequestType = Static<typeof ClosePositionRequest>;
 
-export const ClosePositionResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    positionRentRefunded: Type.Number(),
-    baseTokenAmountRemoved: Type.Number(),
-    quoteTokenAmountRemoved: Type.Number(),
-    baseFeeAmountCollected: Type.Number(),
-    quoteFeeAmountCollected: Type.Number(),
-  },
-  { $id: 'ClosePositionResponse' },
-);
+export const ClosePositionResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      positionRentRefunded: Type.Number(),
+      baseTokenAmountRemoved: Type.Number(),
+      quoteTokenAmountRemoved: Type.Number(),
+      baseFeeAmountCollected: Type.Number(),
+      quoteFeeAmountCollected: Type.Number(),
+    },
+    { $id: 'ClosePositionResponse' },
+  ),
+]);
 export type ClosePositionResponseType = Static<typeof ClosePositionResponse>;
 
 export const QuotePositionRequest = Type.Omit(
@@ -226,15 +244,18 @@ export const QuotePositionRequest = Type.Omit(
 );
 export type QuotePositionRequestType = Static<typeof QuotePositionRequest>;
 
-export const QuotePositionResponse = Type.Object(
-  {
-    baseLimited: Type.Boolean(),
-    baseTokenAmount: Type.Number(),
-    quoteTokenAmount: Type.Number(),
-    baseTokenAmountMax: Type.Number(),
-    quoteTokenAmountMax: Type.Number(),
-    liquidity: Type.Optional(Type.Any()),
-  },
-  { $id: 'QuotePositionResponse' },
-);
+export const QuotePositionResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      baseLimited: Type.Boolean(),
+      baseTokenAmount: Type.Number(),
+      quoteTokenAmount: Type.Number(),
+      baseTokenAmountMax: Type.Number(),
+      quoteTokenAmountMax: Type.Number(),
+      liquidity: Type.Optional(Type.Any()),
+    },
+    { $id: 'QuotePositionResponse' },
+  ),
+]);
 export type QuotePositionResponseType = Static<typeof QuotePositionResponse>;

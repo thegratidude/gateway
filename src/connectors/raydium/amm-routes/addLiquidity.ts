@@ -20,7 +20,7 @@ import {
   AddLiquidityResponseType,
   QuoteLiquidityResponseType,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { quoteLiquidity } from './quoteLiquidity';
@@ -197,12 +197,13 @@ async function addLiquidity(
           await solana.getToken(poolInfo.mintB.address),
           wallet.publicKey.toBase58(),
         );
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: txData.meta.fee / 1e9,
         baseTokenAmountAdded: baseTokenBalanceChange,
         quoteTokenAmountAdded: quoteTokenBalanceChange,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

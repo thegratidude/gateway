@@ -17,7 +17,7 @@ import {
   QuotePositionResponseType,
   QuotePositionResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { parseFeeTier } from '../uniswap.utils';
 
@@ -481,14 +481,15 @@ export const quotePositionRoute: FastifyPluginAsync = async (fastify) => {
         // Calculate liquidity value
         const liquidity = position.liquidity.toString();
 
-        return {
-          baseLimited,
+        return addPSTTimestamp({
+      baseLimited,
           baseTokenAmount: actualBaseAmount,
           quoteTokenAmount: actualQuoteAmount,
           baseTokenAmountMax,
           quoteTokenAmountMax,
           liquidity,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

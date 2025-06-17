@@ -8,19 +8,20 @@ import {
   ApproveResponseType,
 } from '../../../schemas/chain-schema';
 import { bigNumberWithDecimalToStr } from '../../../services/base';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum, TokenInfo } from '../ethereum';
 
 // Helper function to convert transaction to a format matching the CustomTransactionSchema
 const toEthereumTransaction = (transaction: ethers.Transaction) => {
-  return {
-    data: transaction.data,
+  return addPSTTimestamp({
+      data: transaction.data,
     to: transaction.to || '',
     maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString() || null,
     maxFeePerGas: transaction.maxFeePerGas?.toString() || null,
     gasLimit: transaction.gasLimit?.toString() || null,
     value: transaction.value?.toString() || '0',
-  };
+  
+    });
 };
 
 export async function approveEthereumToken(
@@ -106,8 +107,8 @@ export async function approveEthereumToken(
           amountBigNumber,
         );
 
-        return {
-          tokenAddress: tokenInfo.address,
+        return addPSTTimestamp({
+      tokenAddress: tokenInfo.address,
           spender: spenderAddress,
           amount: bigNumberWithDecimalToStr(
             amountBigNumber,
@@ -116,7 +117,8 @@ export async function approveEthereumToken(
           nonce: approval.nonce,
           signature: approval.hash,
           approval: toEthereumTransaction(approval),
-        };
+        
+    });
       } catch (contractErr) {
         logger.error(
           `Failed to interact with token contract at ${normalizedAddress}: ${contractErr.message}`,
@@ -149,14 +151,15 @@ export async function approveEthereumToken(
       amountBigNumber,
     );
 
-    return {
+    return addPSTTimestamp({
       tokenAddress: fullToken.address,
       spender: spenderAddress,
       amount: bigNumberWithDecimalToStr(amountBigNumber, fullToken.decimals),
       nonce: approval.nonce,
       signature: approval.hash,
       approval: toEthereumTransaction(approval),
-    };
+    
+    });
   } catch (error) {
     logger.error(`Error approving token: ${error.message}`);
 

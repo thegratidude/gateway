@@ -14,7 +14,7 @@ import {
   QuoteLiquidityResponse,
   QuoteLiquidityResponseType,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 import { isValidAmm, isValidCpmm } from '../raydium.utils';
 
@@ -46,15 +46,16 @@ function parseAmmResult(result: AmmComputePairResult) {
 }
 
 function parseCpmmResult(result: CpmmComputePairResult, tokenDecimals: number) {
-  return {
-    anotherAmount:
+  return addPSTTimestamp({
+      anotherAmount:
       Number(result.anotherAmount.amount.toString()) / 10 ** tokenDecimals,
     maxAnotherAmount:
       Number(result.maxAnotherAmount.amount.toString()) / 10 ** tokenDecimals,
     inputFee:
       Number(result.inputAmountFee.amount.toString()) / 10 ** tokenDecimals,
     liquidity: result.liquidity.toString(),
-  };
+  
+    });
 }
 
 export async function quoteLiquidity(
@@ -187,21 +188,23 @@ export async function quoteLiquidity(
       console.log('resParsed:amm', resParsed);
 
       if (isBaseIn) {
-        return {
-          baseLimited: true,
+        return addPSTTimestamp({
+      baseLimited: true,
           baseTokenAmount: baseTokenAmount,
           quoteTokenAmount: resParsed.anotherAmount,
           baseTokenAmountMax: baseTokenAmount,
           quoteTokenAmountMax: resParsed.maxAnotherAmount,
-        };
+        
+    });
       } else {
-        return {
-          baseLimited: false,
+        return addPSTTimestamp({
+      baseLimited: false,
           baseTokenAmount: resParsed.anotherAmount,
           quoteTokenAmount: quoteTokenAmount,
           baseTokenAmountMax: resParsed.maxAnotherAmount,
           quoteTokenAmountMax: quoteTokenAmount,
-        };
+        
+    });
       }
     } else if (ammPoolInfo.poolType === 'cpmm') {
       // Handle CPMM case
@@ -221,23 +224,25 @@ export async function quoteLiquidity(
       console.log('resParsed:cpmm', resParsed);
 
       if (isBaseIn) {
-        return {
-          baseLimited: true,
+        return addPSTTimestamp({
+      baseLimited: true,
           baseTokenAmount: baseTokenAmount,
           quoteTokenAmount: resParsed.anotherAmount / 10 ** quoteToken.decimals,
           baseTokenAmountMax: baseTokenAmount,
           quoteTokenAmountMax:
             resParsed.maxAnotherAmount / 10 ** quoteToken.decimals,
-        };
+        
+    });
       } else {
-        return {
-          baseLimited: false,
+        return addPSTTimestamp({
+      baseLimited: false,
           baseTokenAmount: resParsed.anotherAmount / 10 ** baseToken.decimals,
           quoteTokenAmount: quoteTokenAmount,
           baseTokenAmountMax:
             resParsed.maxAnotherAmount / 10 ** baseToken.decimals,
           quoteTokenAmountMax: quoteTokenAmount,
-        };
+        
+    });
       }
     }
   } catch (error) {

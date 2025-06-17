@@ -7,7 +7,7 @@ import {
   WrapResponseType,
 } from '../../../schemas/chain-schema';
 import { bigNumberWithDecimalToStr } from '../../../services/base';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 // WETH ABI for wrap/unwrap operations
@@ -92,14 +92,15 @@ const WRAPPED_ADDRESSES: {
 
 // Helper function to convert transaction to a format matching the CustomTransactionSchema
 const toEthereumTransaction = (transaction: ethers.Transaction) => {
-  return {
-    data: transaction.data,
+  return addPSTTimestamp({
+      data: transaction.data,
     to: transaction.to || '',
     maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString() || null,
     maxFeePerGas: transaction.maxFeePerGas?.toString() || null,
     gasLimit: transaction.gasLimit?.toString() || null,
     value: transaction.value?.toString() || '0',
-  };
+  
+    });
 };
 
 export async function wrapEthereum(
@@ -164,7 +165,7 @@ export async function wrapEthereum(
     const gasPrice = await ethereum.provider.getGasPrice();
     const fee = transaction.gasLimit.mul(gasPrice);
 
-    return {
+    return addPSTTimestamp({
       nonce: transaction.nonce,
       signature: transaction.hash,
       fee: bigNumberWithDecimalToStr(fee, 18),
@@ -173,7 +174,8 @@ export async function wrapEthereum(
       nativeToken: wrappedInfo.nativeSymbol,
       wrappedToken: wrappedInfo.symbol,
       tx: toEthereumTransaction(transaction),
-    };
+    
+    });
   } catch (error) {
     logger.error(
       `Error wrapping ${wrappedInfo.nativeSymbol} to ${wrappedInfo.symbol}: ${error.message}`,

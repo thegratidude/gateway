@@ -10,7 +10,7 @@ import {
   CollectFeesResponseType,
   CollectFeesResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { formatTokenAmount } from '../uniswap.utils';
 
@@ -205,12 +205,13 @@ export const collectFeesRoute: FastifyPluginAsync = async (fastify) => {
           ? token1FeeAmount
           : token0FeeAmount;
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           baseFeeAmountCollected,
           quoteFeeAmountCollected,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

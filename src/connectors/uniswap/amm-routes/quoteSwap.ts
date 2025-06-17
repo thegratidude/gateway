@@ -14,7 +14,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { formatTokenAmount } from '../uniswap.utils';
 
@@ -100,7 +100,7 @@ async function quoteAmmSwap(
     // Calculate price impact
     const priceImpact = parseFloat(trade.priceImpact.toSignificant(4));
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn,
       estimatedAmountOut,
@@ -116,7 +116,8 @@ async function quoteAmmSwap(
       rawMinAmountOut: minAmountOut,
       rawMaxAmountIn: maxAmountIn,
       pathAddresses: trade.route.path.map((token) => token.address),
-    };
+    
+    });
   } catch (error) {
     logger.error(`Error quoting AMM swap: ${error.message}`);
     // Check for insufficient reserves error from Uniswap SDK
@@ -193,13 +194,14 @@ export async function getUniswapAmmQuote(
     throw new Error('Failed to get swap quote');
   }
 
-  return {
-    quote,
+  return addPSTTimestamp({
+      quote,
     uniswap,
     ethereum,
     baseTokenObj,
     quoteTokenObj,
-  };
+  
+    });
 }
 
 async function formatSwapQuote(
@@ -268,7 +270,7 @@ async function formatSwapQuote(
     const gasPriceGwei = formatTokenAmount(gasPrice.toString(), 9); // Convert to Gwei
     logger.info(`Gas price in Gwei: ${gasPriceGwei}`);
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn: quote.estimatedAmountIn,
       estimatedAmountOut: quote.estimatedAmountOut,
@@ -280,7 +282,8 @@ async function formatSwapQuote(
       gasPrice: Number(gasPriceGwei), // Convert to number
       gasLimit: estimatedGasValue, // Already a number
       gasCost,
-    };
+    
+    });
   } catch (error) {
     logger.error(`Error formatting swap quote: ${error.message}`);
     if (error.stack) {

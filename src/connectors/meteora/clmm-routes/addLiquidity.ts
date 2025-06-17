@@ -12,7 +12,7 @@ import {
   AddLiquidityResponse,
   AddLiquidityResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 import { MeteoraConfig } from '../meteora.config';
 
@@ -162,12 +162,13 @@ async function addLiquidity(
     `Liquidity added to position ${positionAddress}: ${Math.abs(tokenXAddedAmount).toFixed(4)} ${tokenXSymbol}, ${Math.abs(tokenYAddedAmount).toFixed(4)} ${tokenYSymbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     baseTokenAmountAdded: Math.abs(tokenXAddedAmount),
     quoteTokenAmountAdded: Math.abs(tokenYAddedAmount),
     fee,
-  };
+  
+    });
 }
 
 export const MeteoraAddLiquidityRequest = Type.Intersect(

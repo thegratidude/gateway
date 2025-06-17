@@ -6,7 +6,7 @@ import {
   TokensRequestSchema,
   TokensResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 export async function getEthereumTokens(
@@ -33,7 +33,7 @@ export async function getEthereumTokens(
       }
     }
 
-    return { tokens };
+    return addPSTTimestamp({ tokens });
   } catch (error) {
     logger.error(`Error getting Ethereum tokens: ${error.message}`);
     throw new Error(`Failed to get tokens: ${error.message}`);
@@ -87,7 +87,7 @@ export const tokensRoute: FastifyPluginAsync = async (fastify) => {
           `Error handling Ethereum tokens request: ${error.message}`,
         );
         reply.status(500);
-        return { tokens: [] };
+        return addPSTTimestamp({ tokens: [] });
       }
     },
   );

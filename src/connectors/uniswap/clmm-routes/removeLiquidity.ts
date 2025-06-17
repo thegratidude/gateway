@@ -12,7 +12,7 @@ import {
   RemoveLiquidityResponseType,
   RemoveLiquidityResponse,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import {
   getUniswapV3NftManagerAddress,
@@ -270,12 +270,13 @@ export const removeLiquidityRoute: FastifyPluginAsync = async (fastify) => {
           ? token1AmountRemoved
           : token0AmountRemoved;
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           baseTokenAmountRemoved,
           quoteTokenAmountRemoved,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

@@ -8,7 +8,7 @@ import {
   BalanceResponseSchema,
 } from '../../../schemas/chain-schema';
 import { tokenValueToString } from '../../../services/base';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 export async function getEthereumBalances(
@@ -149,7 +149,7 @@ export async function getEthereumBalances(
       );
     }
 
-    return { balances };
+    return addPSTTimestamp({ balances });
   } catch (error) {
     if (error.statusCode) {
       throw error; // Re-throw if it's already a Fastify error

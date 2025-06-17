@@ -10,7 +10,7 @@ import {
   RemoveLiquidityRequestType,
   RemoveLiquidityResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 export async function removeLiquidity(
@@ -89,12 +89,13 @@ export async function removeLiquidity(
       );
 
       const totalFee = txData.meta.fee;
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: totalFee / 1e9,
         baseTokenAmountRemoved: 0,
         quoteTokenAmountRemoved: 0,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

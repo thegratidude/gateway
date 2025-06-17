@@ -1,5 +1,8 @@
 import { Type, Static } from '@sinclair/typebox';
 
+// Import the base response schema
+import { BaseResponseSchema } from './chain-schema';
+
 export const GetSwapQuoteRequest = Type.Object(
   {
     network: Type.Optional(Type.String()),
@@ -24,22 +27,25 @@ export const GetSwapQuoteRequest = Type.Object(
 );
 export type GetSwapQuoteRequestType = Static<typeof GetSwapQuoteRequest>;
 
-export const GetSwapQuoteResponse = Type.Object(
-  {
-    poolAddress: Type.Optional(Type.String()),
-    estimatedAmountIn: Type.Number(),
-    estimatedAmountOut: Type.Number(),
-    minAmountOut: Type.Number(),
-    maxAmountIn: Type.Number(),
-    baseTokenBalanceChange: Type.Number(),
-    quoteTokenBalanceChange: Type.Number(),
-    price: Type.Number(),
-    gasPrice: Type.Number(),
-    gasLimit: Type.Number(),
-    gasCost: Type.Number(),
-  },
-  { $id: 'GetSwapQuoteResponse' },
-);
+export const GetSwapQuoteResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      poolAddress: Type.Optional(Type.String()),
+      estimatedAmountIn: Type.Number(),
+      estimatedAmountOut: Type.Number(),
+      minAmountOut: Type.Number(),
+      maxAmountIn: Type.Number(),
+      baseTokenBalanceChange: Type.Number(),
+      quoteTokenBalanceChange: Type.Number(),
+      price: Type.Number(),
+      gasPrice: Type.Number(),
+      gasLimit: Type.Number(),
+      gasCost: Type.Number(),
+    },
+    { $id: 'GetSwapQuoteResponse' },
+  ),
+]);
 export type GetSwapQuoteResponseType = Static<typeof GetSwapQuoteResponse>;
 
 export const ExecuteSwapRequest = Type.Object(
@@ -68,12 +74,18 @@ export const ExecuteSwapRequest = Type.Object(
 
 export type ExecuteSwapRequestType = Static<typeof ExecuteSwapRequest>;
 
-export const ExecuteSwapResponse = Type.Object({
-  signature: Type.String(),
-  totalInputSwapped: Type.Number(),
-  totalOutputSwapped: Type.Number(),
-  fee: Type.Number(),
-  baseTokenBalanceChange: Type.Number(),
-  quoteTokenBalanceChange: Type.Number(),
-});
+export const ExecuteSwapResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      totalInputSwapped: Type.Number(),
+      totalOutputSwapped: Type.Number(),
+      fee: Type.Number(),
+      baseTokenBalanceChange: Type.Number(),
+      quoteTokenBalanceChange: Type.Number(),
+    },
+    { $id: 'ExecuteSwapResponse' },
+  ),
+]);
 export type ExecuteSwapResponseType = Static<typeof ExecuteSwapResponse>;

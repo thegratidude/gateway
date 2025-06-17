@@ -10,7 +10,7 @@ import {
   AddLiquidityRequestType,
   AddLiquidityResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { quotePosition } from './quotePosition';
@@ -118,12 +118,13 @@ async function addLiquidity(
           quoteToken,
           wallet.publicKey.toBase58(),
         );
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         fee: totalFee / 1e9,
         baseTokenAmountAdded: baseTokenBalanceChange,
         quoteTokenAmountAdded: quoteTokenBalanceChange,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

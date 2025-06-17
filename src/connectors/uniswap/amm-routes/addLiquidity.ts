@@ -11,7 +11,7 @@ import {
   AddLiquidityResponseType,
   AddLiquidityResponse,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import {
   getUniswapV2RouterAddress,
@@ -297,14 +297,14 @@ async function addLiquidity(
     18, // ETH has 18 decimals
   );
 
-  return {
+  return addPSTTimestamp({
     signature: receipt.transactionHash,
     fee: gasFee,
     baseTokenAmountAdded: quote.baseTokenAmount,
     quoteTokenAmountAdded: quote.quoteTokenAmount,
     ...(baseWrapTxHash && { baseWrapTxHash }),
     ...(quoteWrapTxHash && { quoteWrapTxHash }),
-  };
+  });
 }
 
 export const addLiquidityRoute: FastifyPluginAsync = async (fastify) => {

@@ -28,6 +28,25 @@ export const getLocalDate = () => {
   return dayjs().utcOffset(offsetMinutes, false).format('YYYY-MM-DD HH:mm:ss');
 };
 
+// Utility function to get PST-formatted timestamp for API responses
+export const getPSTTimestamp = () => {
+  const gmtOffsetHours = ConfigManagerV2.getInstance().get('server.GMTOffset');
+  const offsetMinutes = gmtOffsetHours * 60;
+  return dayjs()
+    .utcOffset(offsetMinutes, false)
+    .format('YYYY-MM-DD HH:mm:ss.SSS');
+};
+
+// Utility function to add PST timestamp to any response object
+export const addPSTTimestamp = <T extends Record<string, any>>(
+  response: T,
+): T & { timestamp: string } => {
+  return {
+    ...response,
+    timestamp: getPSTTimestamp(),
+  };
+};
+
 const logFileFormat = winston.format.combine(
   winston.format.errors({ stack: true }),
   winston.format.align(),

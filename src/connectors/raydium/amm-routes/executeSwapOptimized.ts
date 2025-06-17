@@ -2,7 +2,7 @@ import { FastifyPluginAsync, FastifyInstance } from 'fastify';
 import { VersionedTransaction } from '@solana/web3.js';
 import { BN } from 'bn.js';
 
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana } from '../../../chains/solana/solana';
 import { Raydium } from '../../../connectors/raydium/raydium';
 import { getRawSwapQuote } from './quoteSwap';
@@ -375,7 +375,7 @@ async function executeSwapOptimized(
       `Optimized swap executed successfully: ${Math.abs(side === 'SELL' ? baseTokenBalanceChange : quoteTokenBalanceChange).toFixed(4)} ${baseToken} -> ${Math.abs(side === 'SELL' ? quoteTokenBalanceChange : baseTokenBalanceChange).toFixed(4)} ${quoteToken}`,
     );
 
-    return {
+    return addPSTTimestamp({
       signature,
       totalInputSwapped: Math.abs(
         side === 'SELL' ? baseTokenBalanceChange : quoteTokenBalanceChange,
@@ -386,7 +386,8 @@ async function executeSwapOptimized(
       fee: txData.meta.fee / 1e9,
       baseTokenBalanceChange,
       quoteTokenBalanceChange,
-    };
+    
+    });
   }
 
   throw new Error('Swap execution failed');

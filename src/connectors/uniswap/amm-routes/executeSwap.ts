@@ -9,7 +9,7 @@ import {
   ExecuteSwapResponseType,
   ExecuteSwapResponse,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import {
   getUniswapV2RouterAddress,
@@ -300,14 +300,15 @@ export const executeSwapRoute: FastifyPluginAsync = async (fastify) => {
           ? `swap:${receipt.transactionHash},wrap:${wrapTxHash}`
           : receipt.transactionHash;
 
-        return {
-          signature: txSignature,
+        return addPSTTimestamp({
+      signature: txSignature,
           totalInputSwapped: totalInputSwapped,
           totalOutputSwapped: totalOutputSwapped,
           fee: gasFee,
           baseTokenBalanceChange,
           quoteTokenBalanceChange,
-        };
+        
+    });
       } catch (error) {
         logger.error(`Swap execution error: ${error.message}`);
         if (error.transaction) {

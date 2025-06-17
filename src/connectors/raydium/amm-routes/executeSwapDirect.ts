@@ -9,7 +9,7 @@ import {
   ExecuteSwapRequest,
   ExecuteSwapRequestType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { getRawSwapQuoteDirect } from './quoteSwapDirect';
@@ -178,8 +178,8 @@ async function executeSwapDirect(
         `Swap executed successfully: ${Math.abs(side === 'SELL' ? baseTokenBalanceChange : quoteTokenBalanceChange).toFixed(4)} ${inputToken.symbol} -> ${Math.abs(side === 'SELL' ? quoteTokenBalanceChange : baseTokenBalanceChange).toFixed(4)} ${outputToken.symbol}`,
       );
 
-      return {
-        signature,
+      return addPSTTimestamp({
+      signature,
         totalInputSwapped: Math.abs(
           side === 'SELL' ? baseTokenBalanceChange : quoteTokenBalanceChange,
         ),
@@ -189,7 +189,8 @@ async function executeSwapDirect(
         fee: txData.meta.fee / 1e9,
         baseTokenBalanceChange,
         quoteTokenBalanceChange,
-      };
+      
+    });
     }
     currentPriorityFee =
       currentPriorityFee * solana.config.priorityFeeMultiplier;

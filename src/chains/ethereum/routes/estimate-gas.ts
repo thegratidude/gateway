@@ -7,7 +7,7 @@ import {
   EstimateGasResponseSchema,
 } from '../../../schemas/chain-schema';
 import { gasCostInEthString } from '../../../services/base';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum } from '../ethereum';
 
 export async function estimateGasEthereum(
@@ -27,12 +27,12 @@ export async function estimateGasEthereum(
     // Calculate total gas cost in ETH
     const gasCost = parseFloat(gasCostInEthString(gasPrice, gasLimitUsed));
 
-    return {
+    return addPSTTimestamp({
       gasPrice: gasPrice,
       gasPriceToken: ethereum.nativeTokenSymbol,
       gasLimit: gasLimitUsed,
       gasCost: gasCost,
-    };
+    });
   } catch (error) {
     logger.error(`Error estimating gas: ${error.message}`);
     throw fastify.httpErrors.internalServerError(

@@ -1,5 +1,8 @@
 import { Type, Static } from '@sinclair/typebox';
 
+// Import the base response schema
+import { BaseResponseSchema } from './chain-schema';
+
 export const PoolInfoSchema = Type.Object(
   {
     address: Type.String(),
@@ -45,15 +48,18 @@ export const AddLiquidityRequest = Type.Object(
 );
 export type AddLiquidityRequestType = Static<typeof AddLiquidityRequest>;
 
-export const AddLiquidityResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    baseTokenAmountAdded: Type.Number(),
-    quoteTokenAmountAdded: Type.Number(),
-  },
-  { $id: 'AddLiquidityResponse' },
-);
+export const AddLiquidityResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      baseTokenAmountAdded: Type.Number(),
+      quoteTokenAmountAdded: Type.Number(),
+    },
+    { $id: 'AddLiquidityResponse' },
+  ),
+]);
 export type AddLiquidityResponseType = Static<typeof AddLiquidityResponse>;
 
 export const QuoteLiquidityRequest = Type.Omit(
@@ -63,16 +69,19 @@ export const QuoteLiquidityRequest = Type.Omit(
 );
 export type QuoteLiquidityRequestType = Static<typeof QuoteLiquidityRequest>;
 
-export const QuoteLiquidityResponse = Type.Object(
-  {
-    baseLimited: Type.Boolean(),
-    baseTokenAmount: Type.Number(),
-    quoteTokenAmount: Type.Number(),
-    baseTokenAmountMax: Type.Number(),
-    quoteTokenAmountMax: Type.Number(),
-  },
-  { $id: 'QuoteLiquidityResponse' },
-);
+export const QuoteLiquidityResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      baseLimited: Type.Boolean(),
+      baseTokenAmount: Type.Number(),
+      quoteTokenAmount: Type.Number(),
+      baseTokenAmountMax: Type.Number(),
+      quoteTokenAmountMax: Type.Number(),
+    },
+    { $id: 'QuoteLiquidityResponse' },
+  ),
+]);
 export type QuoteLiquidityResponseType = Static<typeof QuoteLiquidityResponse>;
 
 export const RemoveLiquidityRequest = Type.Object(
@@ -88,15 +97,18 @@ export const RemoveLiquidityRequest = Type.Object(
 );
 export type RemoveLiquidityRequestType = Static<typeof RemoveLiquidityRequest>;
 
-export const RemoveLiquidityResponse = Type.Object(
-  {
-    signature: Type.String(),
-    fee: Type.Number(),
-    baseTokenAmountRemoved: Type.Number(),
-    quoteTokenAmountRemoved: Type.Number(),
-  },
-  { $id: 'RemoveLiquidityResponse' },
-);
+export const RemoveLiquidityResponse = Type.Intersect([
+  BaseResponseSchema,
+  Type.Object(
+    {
+      signature: Type.String(),
+      fee: Type.Number(),
+      baseTokenAmountRemoved: Type.Number(),
+      quoteTokenAmountRemoved: Type.Number(),
+    },
+    { $id: 'RemoveLiquidityResponse' },
+  ),
+]);
 export type RemoveLiquidityResponseType = Static<
   typeof RemoveLiquidityResponse
 >;

@@ -6,7 +6,7 @@ import {
   EstimateGasRequestSchema,
   EstimateGasResponseSchema,
 } from '../../../schemas/chain-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Solana, BASE_FEE } from '../solana';
 
 export async function estimateGasSolana(
@@ -20,12 +20,13 @@ export async function estimateGasSolana(
     const gasCost = await solana.estimateGas(gasLimitUsed);
     const priorityFeeInLamports = await solana.estimateGasPrice();
 
-    return {
+    return addPSTTimestamp({
       gasPrice: priorityFeeInLamports,
       gasPriceToken: solana.nativeTokenSymbol,
       gasLimit: gasLimitUsed,
       gasCost: gasCost,
-    };
+    
+    });
   } catch (error) {
     logger.error(`Error estimating gas: ${error.message}`);
     throw fastify.httpErrors.internalServerError(

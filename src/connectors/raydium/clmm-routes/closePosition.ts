@@ -8,7 +8,7 @@ import {
   ClosePositionRequestType,
   ClosePositionResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 import { removeLiquidity } from './removeLiquidity';
@@ -44,8 +44,8 @@ async function closePosition(
       );
       const rentRefunded = Math.abs(balanceChange);
 
-      return {
-        signature: removeLiquidityResponse.signature,
+      return addPSTTimestamp({
+      signature: removeLiquidityResponse.signature,
         fee: removeLiquidityResponse.fee,
         positionRentRefunded: rentRefunded,
         baseTokenAmountRemoved: removeLiquidityResponse.baseTokenAmountRemoved,
@@ -53,7 +53,8 @@ async function closePosition(
           removeLiquidityResponse.quoteTokenAmountRemoved,
         baseFeeAmountCollected: 0,
         quoteFeeAmountCollected: 0,
-      };
+      
+    });
     }
 
     // Original close position logic for empty positions
@@ -83,7 +84,7 @@ async function closePosition(
     );
     const rentRefunded = Math.abs(balanceChange);
 
-    return {
+    return addPSTTimestamp({
       signature,
       fee,
       positionRentRefunded: rentRefunded,
@@ -91,7 +92,8 @@ async function closePosition(
       quoteTokenAmountRemoved: 0,
       baseFeeAmountCollected: 0,
       quoteFeeAmountCollected: 0,
-    };
+    
+    });
   } catch (error) {
     logger.error(error);
     throw error;

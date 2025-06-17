@@ -9,7 +9,7 @@ import {
   QuoteLiquidityResponseType,
   QuoteLiquidityResponse,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import { IUniswapV2PairABI } from '../uniswap.contracts';
 import { formatTokenAmount } from '../uniswap.utils';
@@ -203,8 +203,8 @@ export async function getUniswapAmmLiquidityQuote(
     ).toString(),
   );
 
-  return {
-    baseLimited,
+  return addPSTTimestamp({
+      baseLimited,
     baseTokenAmount: baseTokenAmountOptimal,
     quoteTokenAmount: quoteTokenAmountOptimal,
     baseTokenAmountMax: baseTokenAmount || baseTokenAmountOptimal,
@@ -215,7 +215,8 @@ export async function getUniswapAmmLiquidityQuote(
     rawBaseTokenAmount,
     rawQuoteTokenAmount,
     routerAddress,
-  };
+  
+    });
 }
 
 export const quoteLiquidityRoute: FastifyPluginAsync = async (fastify) => {
@@ -272,13 +273,14 @@ export const quoteLiquidityRoute: FastifyPluginAsync = async (fastify) => {
           slippagePct,
         );
 
-        return {
-          baseLimited: quote.baseLimited,
+        return addPSTTimestamp({
+      baseLimited: quote.baseLimited,
           baseTokenAmount: quote.baseTokenAmount,
           quoteTokenAmount: quote.quoteTokenAmount,
           baseTokenAmountMax: quote.baseTokenAmountMax,
           quoteTokenAmountMax: quote.quoteTokenAmountMax,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

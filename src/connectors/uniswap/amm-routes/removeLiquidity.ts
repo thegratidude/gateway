@@ -10,7 +10,7 @@ import {
   RemoveLiquidityResponseType,
   RemoveLiquidityResponse,
 } from '../../../schemas/amm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Uniswap } from '../uniswap';
 import {
   getUniswapV2RouterAddress,
@@ -269,12 +269,13 @@ export const removeLiquidityRoute: FastifyPluginAsync = async (fastify) => {
           18, // ETH has 18 decimals
         );
 
-        return {
-          signature: receipt.transactionHash,
+        return addPSTTimestamp({
+      signature: receipt.transactionHash,
           fee: gasFee,
           baseTokenAmountRemoved,
           quoteTokenAmountRemoved,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

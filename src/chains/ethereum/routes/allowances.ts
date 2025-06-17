@@ -7,7 +7,7 @@ import {
   AllowancesResponseType,
 } from '../../../schemas/chain-schema';
 import { tokenValueToString } from '../../../services/base';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Ethereum, TokenInfo } from '../ethereum';
 
 export async function getTokensToTokenInfo(
@@ -99,10 +99,10 @@ export async function getEthereumAllowances(
       }),
     );
 
-    return {
+    return addPSTTimestamp({
       spender: spenderAddress,
       approvals: approvals,
-    };
+    });
   } catch (error) {
     logger.error(`Error getting allowances: ${error.message}`);
     if (error.statusCode === 400) {

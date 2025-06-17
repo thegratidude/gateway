@@ -129,8 +129,10 @@ const configureGatewayServer = () => {
           transport: {
             target: 'pino-pretty',
             options: {
-              translateTime: 'HH:MM:ss Z',
+              translateTime: 'HH:MM:ss',
               ignore: 'pid,hostname',
+              colorize: true,
+              levelFirst: true,
             },
           },
         }

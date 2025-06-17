@@ -9,7 +9,7 @@ import {
   CollectFeesRequestType,
   CollectFeesResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Raydium } from '../raydium';
 
 export async function collectFees(
@@ -86,12 +86,13 @@ export async function collectFees(
     )} ${tokenBSymbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     fee,
     baseFeeAmountCollected: Math.abs(collectedFeeA),
     quoteFeeAmountCollected: Math.abs(collectedFeeB),
-  };
+  
+    });
 }
 
 export const collectFeesRoute: FastifyPluginAsync = async (fastify) => {

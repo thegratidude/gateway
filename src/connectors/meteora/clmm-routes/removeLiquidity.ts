@@ -8,7 +8,7 @@ import {
   RemoveLiquidityRequestType,
   RemoveLiquidityResponseType,
 } from '../../../schemas/clmm-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 
 // Using Fastify's native error handling
@@ -94,12 +94,13 @@ export async function removeLiquidity(
     `Liquidity removed from position ${positionAddress}: ${Math.abs(tokenXRemovedAmount).toFixed(4)} ${tokenXSymbol}, ${Math.abs(tokenYRemovedAmount).toFixed(4)} ${tokenYSymbol}`,
   );
 
-  return {
-    signature,
+  return addPSTTimestamp({
+      signature,
     fee,
     baseTokenAmountRemoved: Math.abs(tokenXRemovedAmount),
     quoteTokenAmountRemoved: Math.abs(tokenYRemovedAmount),
-  };
+  
+    });
 }
 
 export const removeLiquidityRoute: FastifyPluginAsync = async (fastify) => {

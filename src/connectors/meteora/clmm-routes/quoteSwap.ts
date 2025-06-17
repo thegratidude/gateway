@@ -12,7 +12,7 @@ import {
   GetSwapQuoteRequestType,
   GetSwapQuoteRequest,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { Meteora } from '../meteora';
 
 export async function getRawSwapQuote(
@@ -66,14 +66,15 @@ export async function getRawSwapQuote(
         )
       : dlmmPool.swapQuote(amount_bn, swapForY, effectiveSlippage, binArrays);
 
-  return {
-    inputToken,
+  return addPSTTimestamp({
+      inputToken,
     outputToken,
     swapAmount: amount_bn,
     swapForY,
     quote,
     dlmmPool,
-  };
+  
+    });
 }
 
 async function formatSwapQuote(
@@ -123,7 +124,7 @@ async function formatSwapQuote(
 
     const price = amountOut / estimatedAmountIn;
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn,
       estimatedAmountOut: amountOut,
@@ -135,7 +136,8 @@ async function formatSwapQuote(
       gasPrice: 0,
       gasLimit: 0,
       gasCost: 0,
-    };
+    
+    });
   } else {
     const exactInQuote = quote as SwapQuote;
     const estimatedAmountIn = DecimalUtil.fromBN(
@@ -159,7 +161,7 @@ async function formatSwapQuote(
 
     const price = estimatedAmountOut / estimatedAmountIn;
 
-    return {
+    return addPSTTimestamp({
       poolAddress,
       estimatedAmountIn,
       estimatedAmountOut,
@@ -171,7 +173,8 @@ async function formatSwapQuote(
       gasPrice: 0,
       gasLimit: 0,
       gasCost: 0,
-    };
+    
+    });
   }
 }
 
@@ -249,12 +252,13 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify) => {
           );
         }
 
-        return {
-          ...result,
+        return addPSTTimestamp({
+      ...result,
           gasPrice: gasEstimation?.gasPrice,
           gasLimit: gasEstimation?.gasLimit,
           gasCost: gasEstimation?.gasCost,
-        };
+        
+    });
       } catch (e) {
         logger.error(e);
         if (e.statusCode) {

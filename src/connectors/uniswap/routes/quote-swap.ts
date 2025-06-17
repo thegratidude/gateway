@@ -14,7 +14,7 @@ import {
   GetSwapQuoteResponse,
   GetSwapQuoteRequestType,
 } from '../../../schemas/swap-schema';
-import { logger } from '../../../services/logger';
+import { logger, addPSTTimestamp } from '../../../services/logger';
 import { formatTokenAmount } from '../uniswap.utils';
 
 // Removing the Protocol enum as it's causing type issues
@@ -233,8 +233,8 @@ export async function getUniswapQuote(
   const gasPrice = await ethereum.estimateGasPrice(); // Use ethereum's estimateGasPrice method
   const gasCost = gasPrice * gasLimit * 1e-9; // Convert to ETH
 
-  return {
-    route,
+  return addPSTTimestamp({
+      route,
     baseToken,
     quoteToken,
     inputToken,
@@ -252,7 +252,8 @@ export async function getUniswapQuote(
     gasPrice,
     gasLimit,
     gasCost,
-  };
+  
+    });
 }
 
 export const quoteSwapRoute: FastifyPluginAsync = async (fastify, _options) => {
@@ -334,8 +335,8 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify, _options) => {
           );
 
           // Return only the data needed for the API response
-          return {
-            estimatedAmountIn: quoteResult.estimatedAmountIn,
+          return addPSTTimestamp({
+      estimatedAmountIn: quoteResult.estimatedAmountIn,
             estimatedAmountOut: quoteResult.estimatedAmountOut,
             minAmountOut: quoteResult.minAmountOut,
             maxAmountIn: quoteResult.maxAmountIn,
@@ -345,7 +346,8 @@ export const quoteSwapRoute: FastifyPluginAsync = async (fastify, _options) => {
             gasPrice: quoteResult.gasPrice,
             gasLimit: quoteResult.gasLimit,
             gasCost: quoteResult.gasCost,
-          };
+          
+    });
         } catch (error) {
           // If the error already has a status code, it's a Fastify HTTP error
           if (error.statusCode) {
