@@ -157,8 +157,8 @@ class PreAssemblyManager {
         if (fixedSide === 'out') {
           // AMM swap base out (exact output)
           ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
-            poolInfo: poolInfoData,
-            poolKeys: poolKeysData,
+            poolInfo: poolInfoData as any,
+            poolKeys: poolKeysData as any,
             amountIn: quote.maxAmountIn,
             amountOut: new BN(quote.amountOut),
             fixedSide: 'out',
@@ -172,8 +172,8 @@ class PreAssemblyManager {
         } else {
           // AMM swap (exact input)
           ({ transaction } = (await this.raydium.raydiumSDK.liquidity.swap({
-            poolInfo: poolInfoData,
-            poolKeys: poolKeysData,
+            poolInfo: poolInfoData as any,
+            poolKeys: poolKeysData as any,
             amountIn: new BN(quote.amountIn),
             amountOut: quote.minAmountOut,
             fixedSide: 'in',
@@ -208,8 +208,8 @@ class PreAssemblyManager {
         if (fixedSide === 'out') {
           // CPMM swap base out (exact output)
           ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
-            poolInfo: poolInfoData,
-            poolKeys: poolKeysData,
+            poolInfo: poolInfoData as any,
+            poolKeys: poolKeysData as any,
             inputAmount: quote.maxAmountIn,
             swapResult: {
               sourceAmountSwapped: quote.maxAmountIn,
@@ -226,11 +226,11 @@ class PreAssemblyManager {
         } else {
           // CPMM swap (exact input)
           ({ transaction } = (await this.raydium.raydiumSDK.cpmm.swap({
-            poolInfo: poolInfoData,
-            poolKeys: poolKeysData,
-            inputAmount: new BN(quote.amountIn),
+            poolInfo: poolInfoData as any,
+            poolKeys: poolKeysData as any,
+            inputAmount: quote.amountIn,
             swapResult: {
-              sourceAmountSwapped: new BN(quote.amountIn),
+              sourceAmountSwapped: quote.amountIn,
               destinationAmountSwapped: quote.minAmountOut,
             },
             slippage: slippagePct / 100,

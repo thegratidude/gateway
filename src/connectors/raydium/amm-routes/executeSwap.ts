@@ -81,8 +81,8 @@ async function executeSwap(
         );
 
         ({ transaction } = (await raydium.raydiumSDK.liquidity.swap({
-          poolInfo: poolInfoData,
-          poolKeys: poolKeysData,
+          poolInfo: poolInfoData as any,
+          poolKeys: poolKeysData as any,
           amountIn: amountIn,
           amountOut: new BN(0), // Will be calculated internally by SDK
           fixedSide: 'in',
@@ -109,8 +109,8 @@ async function executeSwap(
         );
 
         ({ transaction } = (await raydium.raydiumSDK.cpmm.swap({
-          poolInfo: poolInfoData,
-          poolKeys: poolKeysData,
+          poolInfo: poolInfoData as any,
+          poolKeys: poolKeysData as any,
           inputAmount: amountIn,
           swapResult: {
             sourceAmountSwapped: amountIn,
@@ -214,8 +214,8 @@ async function executeSwap(
           quoteReserve: rpcData.quoteReserve,
           status: rpcData.status.toNumber(),
           version: 4,
-        },
-        poolKeys: poolKeysData,
+        } as any,
+        poolKeys: poolKeysData as any,
         amountIn: new BN(quote.amountIn),
         amountOut: quote.minAmountOut,
         fixedSide: 'in',
@@ -237,8 +237,8 @@ async function executeSwap(
       const baseIn = inputToken.address === poolInfoData.mintA.address;
 
       ({ transaction } = (await raydium.raydiumSDK.cpmm.swap({
-        poolInfo: poolInfoData,
-        poolKeys: poolKeysData,
+        poolInfo: poolInfoData as any,
+        poolKeys: poolKeysData as any,
         inputAmount: quote.amountIn,
         swapResult: {
           sourceAmountSwapped: quote.amountIn,
