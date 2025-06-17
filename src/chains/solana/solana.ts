@@ -1392,6 +1392,160 @@ export class Solana {
     };
   }
 
+  /**
+   * Enhanced error analysis for Raydium swap failures
+   * Provides specific error messages based on transaction logs and error codes
+   */
+  public analyzeRaydiumSwapError(
+    error: any,
+    logs: string[],
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: string,
+  ): string {
+    const errorString = JSON.stringify(error);
+    const logsString = logs.join('\n');
+
+    // Check for specific Raydium error codes
+    if (errorString.includes('"Custom":40')) {
+      // Error 0x28 = 40 = "insufficient funds"
+      return this.analyzeInsufficientFundsError(logs, poolAddress, baseToken, quoteToken, amount, side);
+    }
+
+    if (errorString.includes('"Custom":41')) {
+      // Error 0x29 = 41 = "invalid pool state"
+      return `🔄 Pool State Error: Pool ${poolAddress} is in an invalid state. The pool may be paused, have insufficient reserves, or be in maintenance mode. Try a different pool or check if the pool is active.`;
+    }
+
+    if (errorString.includes('"Custom":42')) {
+      // Error 0x2A = 42 = "slippage exceeded"
+      return `📉 Slippage Exceeded: The actual swap amount is less than the minimum due to price movement. Try increasing slippage tolerance or reducing the swap amount. Current amount: ${amount} ${side === 'BUY' ? quoteToken : baseToken}`;
+    }
+
+    if (errorString.includes('"Custom":43')) {
+      // Error 0x2B = 43 = "pool not found"
+      return `🔍 Pool Not Found: Pool ${poolAddress} does not exist or is not accessible. Verify the pool address is correct.`;
+    }
+
+    if (errorString.includes('"Custom":44')) {
+      // Error 0x2C = 44 = "token account not found"
+      return `💳 Token Account Missing: Required token account for ${side === 'BUY' ? baseToken : quoteToken} does not exist. The system will attempt to create it, but this may fail if you have insufficient SOL for rent.`;
+    }
+
+    if (errorString.includes('"Custom":45')) {
+      // Error 0x2D = 45 = "insufficient token balance"
+      return `💰 Insufficient Token Balance: You don't have enough ${side === 'BUY' ? quoteToken : baseToken} to complete this swap. Required: ${amount}, Available: Check your wallet balance.`;
+    }
+
+    // Generic analysis for unknown errors
+    return this.analyzeGenericSwapError(error, logs, poolAddress, baseToken, quoteToken, amount, side);
+  }
+
+  /**
+   * Detailed analysis of "insufficient funds" errors
+   */
+  private analyzeInsufficientFundsError(
+    logs: string[],
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: string,
+  ): string {
+    const logsString = logs.join('\n');
+
+    // Check if it's a token account creation issue
+    if (logsString.includes('InitializeAccount') && logsString.includes('success')) {
+      return `💳 Token Account Created Successfully, but Swap Failed: The system created a token account for ${side === 'BUY' ? baseToken : quoteToken}, but the Raydium swap failed. This usually means:
+1. 🔄 Pool Liquidity Issue: Pool ${poolAddress} doesn't have enough ${side === 'BUY' ? baseToken : quoteToken} to fulfill your swap of ${amount} ${side === 'BUY' ? quoteToken : baseToken}
+2. 📊 Amount Too Small: The swap amount may be below the pool's minimum trade size
+3. 🏊 Pool State: The pool may be inactive or have insufficient reserves
+
+Try: Reducing the swap amount, using a different pool, or checking if this is a new/illiquid token.`;
+    }
+
+    // Check if it's a pool liquidity issue
+    if (logsString.includes('ray_log:')) {
+      return `🏊 Pool Liquidity Insufficient: Pool ${poolAddress} cannot fulfill your swap request. This means:
+1. 📉 Low Liquidity: The pool doesn't have enough ${side === 'BUY' ? baseToken : quoteToken} tokens
+2. 🐛 New Token: This may be a new token with very low liquidity
+3. 💸 Dust Pool: The pool may have insufficient reserves for meaningful trades
+
+Try: Using a smaller amount, waiting for more liquidity, or finding a different pool for ${baseToken}/${quoteToken}.`;
+    }
+
+    // Check if it's a wallet balance issue
+    if (logsString.includes('11111111111111111111111111111111')) {
+      return `💰 Wallet Balance Insufficient: Your wallet doesn't have enough SOL to cover:
+1. 💸 Swap Amount: ${amount} ${side === 'BUY' ? quoteToken : baseToken}
+2. 🏦 Transaction Fee: ~0.0001-0.001 SOL
+3. 🏠 Token Account Rent: ~0.002 SOL (if creating new token account)
+
+Total Required: ~${(amount + 0.003).toFixed(4)} SOL. Check your wallet balance and ensure you have enough SOL for the swap + fees + rent.`;
+    }
+
+    // Default insufficient funds message
+    return `💸 Insufficient Funds Error: The swap failed due to insufficient funds. This could be:
+1. 🏊 Pool Liquidity: Pool ${poolAddress} doesn't have enough tokens
+2. 💰 Wallet Balance: Your wallet doesn't have enough ${side === 'BUY' ? quoteToken : baseToken}
+3. 🏦 Transaction Costs: Insufficient SOL for fees and token account rent
+4. 📊 Amount Issues: The swap amount may be too small or too large for the pool
+
+Try: Reducing the amount, checking your balance, or using a different pool.`;
+  }
+
+  /**
+   * Generic error analysis for unknown swap errors
+   */
+  private analyzeGenericSwapError(
+    error: any,
+    logs: string[],
+    poolAddress: string,
+    baseToken: string,
+    quoteToken: string,
+    amount: number,
+    side: string,
+  ): string {
+    const errorString = JSON.stringify(error);
+    const logsString = logs.join('\n');
+
+    // Look for common patterns in the logs
+    if (logsString.includes('Program log: Error:')) {
+      const errorMatch = logsString.match(/Program log: Error: (.+)/);
+      if (errorMatch) {
+        return `❌ Raydium Program Error: ${errorMatch[1]}. This is a specific error from the Raydium program. Check the pool state and try again.`;
+      }
+    }
+
+    if (logsString.includes('insufficient funds')) {
+      return `💸 Generic Insufficient Funds: The transaction failed due to insufficient funds. Check:
+1. 💰 Wallet balance for ${side === 'BUY' ? quoteToken : baseToken}
+2. 🏊 Pool liquidity in ${poolAddress}
+3. 🏦 SOL balance for transaction fees
+4. 📊 Swap amount (${amount}) relative to pool size`;
+    }
+
+    if (logsString.includes('invalid instruction')) {
+      return `🔧 Invalid Instruction: The transaction contains invalid instructions. This may indicate:
+1. 🐛 Bug in the swap logic
+2. 📡 Network issues
+3. 🔄 Outdated pool data
+4. 🏗️ Incompatible transaction format`;
+    }
+
+    // Fallback error message
+    return `❌ Swap Failed: Unknown error occurred during swap execution.
+Error: ${errorString}
+Pool: ${poolAddress}
+Tokens: ${baseToken}/${quoteToken}
+Amount: ${amount} ${side === 'BUY' ? quoteToken : baseToken}
+Side: ${side}
+
+Check the logs for more details and try again with a different amount or pool.`;
+  }
+
   public async simulateTransaction(
     transaction: VersionedTransaction | Transaction,
   ) {
@@ -1432,11 +1586,27 @@ export class Solana {
 
       if (simulatedTransactionResponse.err) {
         const logs = simulatedTransactionResponse.logs || [];
-        const errorMessage = `${SIMULATION_ERROR_MESSAGE}\nError: ${JSON.stringify(simulatedTransactionResponse.err)}\nProgram Logs: ${logs.join('\n')}`;
+        
+        // Enhanced error analysis for Raydium swaps
+        let detailedErrorMessage = '';
+        if (logs.some(log => log.includes('675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8'))) {
+          // This is a Raydium swap error - provide detailed analysis
+          detailedErrorMessage = this.analyzeRaydiumSwapError(
+            simulatedTransactionResponse.err,
+            logs,
+            'unknown', // poolAddress will be filled by calling function
+            'unknown', // baseToken will be filled by calling function  
+            'unknown', // quoteToken will be filled by calling function
+            0, // amount will be filled by calling function
+            'unknown', // side will be filled by calling function
+          );
+        } else {
+          // Generic error message
+          detailedErrorMessage = `${SIMULATION_ERROR_MESSAGE}\nError: ${JSON.stringify(simulatedTransactionResponse.err)}\nProgram Logs: ${logs.join('\n')}`;
+        }
 
-        logger.error(errorMessage);
-
-        throw new Error(errorMessage);
+        logger.error(detailedErrorMessage);
+        throw new Error(detailedErrorMessage);
       }
     } catch (error) {
       if (error instanceof Error) {

@@ -350,7 +350,25 @@ async function executeSwapOptimized(
   
   // Skip simulation for SELL orders to enable ultra-fast exits
   if (side !== 'SELL') {
-    await solana.simulateTransaction(transaction as VersionedTransaction);
+    try {
+      await solana.simulateTransaction(transaction as VersionedTransaction);
+    } catch (error) {
+      // Enhanced error handling with specific swap details
+      if (error.message.includes('675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8')) {
+        // This is a Raydium swap error - provide detailed analysis with actual swap details
+        const enhancedError = solana.analyzeRaydiumSwapError(
+          error,
+          error.message.split('\n').filter((line) => line.includes('Program log:')),
+          poolAddress,
+          baseToken,
+          quoteToken,
+          effectiveAmount,
+          side,
+        );
+        throw new Error(enhancedError);
+      }
+      throw error;
+    }
   } else {
     logger.info(
       '⚡ ULTRA-FAST SELL: Skipping transaction simulation for faster execution',
@@ -480,6 +498,23 @@ export const executeSwapOptimizedRoute: FastifyPluginAsync = async (
         );
       } catch (e) {
         logger.error(e);
+        
+        // Preserve detailed error messages for Raydium swap failures
+        if (e.message && (
+          e.message.includes('💳 Token Account Created Successfully') ||
+          e.message.includes('🏊 Pool Liquidity Insufficient') ||
+          e.message.includes('💰 Wallet Balance Insufficient') ||
+          e.message.includes('💸 Insufficient Funds Error') ||
+          e.message.includes('🔄 Pool State Error') ||
+          e.message.includes('📉 Slippage Exceeded') ||
+          e.message.includes('🔍 Pool Not Found') ||
+          e.message.includes('💳 Token Account Missing') ||
+          e.message.includes('💰 Insufficient Token Balance') ||
+          e.message.includes('❌ Raydium Program Error')
+        )) {
+          throw fastify.httpErrors.badRequest(e.message);
+        }
+        
         throw fastify.httpErrors.internalServerError(
           'Failed to execute optimized swap',
         );
